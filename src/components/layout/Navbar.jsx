@@ -23,19 +23,14 @@ const Navbar = () => {
   };
 
   const NavLinks = ({ className = "", onClick }) => (
-    <div className={`flex gap-6 ${className}`}>
-      {isAuthenticated && (
-        <Link to="/dashboard" className="text-sm font-medium transition-colors hover:text-primary" onClick={onClick}>
-          Dashboard
-        </Link>
-      )}
-      <Link to="/activities" className="text-sm font-medium transition-colors hover:text-primary" onClick={onClick}>
-        Activities
+    <div className={`flex gap-8 ${className}`}>
+      <Link to="/dashboard" className="text-base font-medium transition-colors hover:text-primary hover:scale-105" onClick={onClick}>
+        Dashboard
       </Link>
-      <Link to="/events" className="text-sm font-medium transition-colors hover:text-primary" onClick={onClick}>
+      <Link to="/events" className="text-base font-medium transition-colors hover:text-primary hover:scale-105" onClick={onClick}>
         Events
       </Link>
-      <Link to="/blog" className="text-sm font-medium transition-colors hover:text-primary" onClick={onClick}>
+      <Link to="/blog" className="text-base font-medium transition-colors hover:text-primary hover:scale-105" onClick={onClick}>
         Blog
       </Link>
     </div>
@@ -45,18 +40,18 @@ const Navbar = () => {
     <div className={`flex items-center gap-4 ${className}`}>
       {isAuthenticated ? (
         <>
-          <span className="text-sm font-medium">{currentUser?.name}</span>
-          <Button variant="ghost" onClick={handleLogout}>
+          <span className="text-base font-medium">{currentUser?.name}</span>
+          <Button size="lg" variant="ghost" onClick={handleLogout}>
             Logout
           </Button>
         </>
       ) : (
         <>
           <Link to="/login" onClick={onClick}>
-            <Button variant="ghost">Login</Button>
+            <Button size="lg" variant="ghost">Login</Button>
           </Link>
           <Link to="/signup" onClick={onClick}>
-            <Button>Sign Up</Button>
+            <Button size="lg">Sign Up</Button>
           </Link>
         </>
       )}
@@ -64,17 +59,21 @@ const Navbar = () => {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <div className="mr-4 hidden md:flex">
-          <Link to="/" className="mr-6 flex items-center space-x-2">
-            <span className="font-bold">EnnyGo</span>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
+      <div className="container flex h-20 items-center">
+        <div className="flex-1 hidden md:flex items-center">
+          <Link to="/" className="flex items-center space-x-2">
+            <span className="text-xl font-bold tracking-tight hover:text-primary transition-colors">EnnyGo</span>
           </Link>
+        </div>
+
+        <div className="hidden md:flex flex-1 justify-center">
           <NavLinks />
         </div>
+
         <div className="flex flex-1 items-center justify-between md:justify-end">
           <Link to="/" className="md:hidden">
-            <span className="font-bold">EnnyGo</span>
+            <span className="text-xl font-bold tracking-tight">EnnyGo</span>
           </Link>
           <div className="flex items-center">
             <div className="hidden md:flex">
@@ -82,14 +81,14 @@ const Navbar = () => {
             </div>
             <Sheet>
               <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="icon" className="ml-2">
-                  <Menu className="h-5 w-5" />
+                <Button variant="ghost" size="lg" className="ml-2">
+                  <Menu className="h-6 w-6" />
                   <span className="sr-only">Toggle menu</span>
                 </Button>
               </SheetTrigger>
               <SheetContent side="right">
                 <SheetHeader>
-                  <SheetTitle>EnnyGo</SheetTitle>
+                  <SheetTitle className="text-xl">EnnyGo</SheetTitle>
                 </SheetHeader>
                 <div className="flex flex-col gap-4 py-4">
                   <NavLinks onClick={() => dispatch(setSidebarState({ isOpen: false }))} />

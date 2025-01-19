@@ -8,6 +8,7 @@ const Events = React.lazy(() => import('./pages/Events'));
 const Blog = React.lazy(() => import('./pages/Blog'));
 const Login = React.lazy(() => import('./pages/Login'));
 const SignUp = React.lazy(() => import('./pages/SignUp'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Home />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="events" element={<Events />} />
             <Route path="blog" element={<Blog />} />
             <Route path="login" element={<Login />} />
