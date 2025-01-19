@@ -10,6 +10,11 @@ const app = express();
 // Serve static files from the dist directory
 app.use(express.static(path.join(__dirname, 'dist')));
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy' });
+});
+
 // Handle client-side routing by serving index.html for all routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
