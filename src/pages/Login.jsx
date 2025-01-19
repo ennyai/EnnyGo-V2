@@ -15,6 +15,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Checkbox } from "../components/ui/checkbox";
+import { SocialButtons } from "@/components/ui/social-buttons";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -59,9 +60,16 @@ const Login = () => {
     }
   };
 
-  const handleSocialLogin = (provider) => {
-    // Implement social login logic here
-    console.log(`${provider} login clicked`);
+  const handleGoogleLogin = () => {
+    dispatch(setLoading(true));
+    // Implement Google login logic here
+    console.log('Google login clicked');
+  };
+
+  const handleStravaLogin = () => {
+    dispatch(setLoading(true));
+    // Implement Strava login logic here
+    console.log('Strava login clicked');
   };
 
   return (
@@ -78,34 +86,11 @@ const Login = () => {
             </div>
           )}
           
-          <div className="grid gap-4">
-            <Button 
-              variant="outline" 
-              onClick={() => handleSocialLogin('google')}
-              disabled={isLoading}
-              className="w-full"
-            >
-              <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" 
-                alt="Google" 
-                className="mr-2 h-4 w-4"
-              />
-              Continue with Google
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => handleSocialLogin('strava')}
-              disabled={isLoading}
-              className="w-full"
-            >
-              <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/4/44/Strava_Logo.svg" 
-                alt="Strava"
-                className="mr-2 h-4 w-4"
-              />
-              Continue with Strava
-            </Button>
-          </div>
+          <SocialButtons
+            onGoogleClick={handleGoogleLogin}
+            onStravaClick={handleStravaLogin}
+            isLoading={isLoading}
+          />
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
