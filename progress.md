@@ -93,8 +93,20 @@
        - Content sections
    - [ ] Integration tests
 
-### Recent Updates (2024-03-XX)
-1. Implemented comprehensive unit tests for the Events component:
+### Recent Updates (2024-03-21)
+1. GitHub Repository Setup
+   - Initialized local Git repository
+   - Created GitHub repository
+   - Set up initial commit with project structure
+   - Implemented branching strategy:
+     - Main branch for stable code
+     - Feature branches for new development
+     - Fix branches for bug resolution
+     - Test branches for test implementation
+   - Added comprehensive commit message guidelines
+   - Set up GitHub Desktop for repository management
+
+2. Implemented comprehensive unit tests for the Events component:
    - Added test utilities for Redux store integration
    - Created mock states for different scenarios:
      - Loading state
@@ -166,3 +178,39 @@ src/
 3. Implement authentication flow
 4. Set up API integration
 5. Add comprehensive testing
+
+## Development Workflow
+### Branching Strategy
+- Main Branch (main)
+  - Contains stable, production-ready code
+  - Protected from direct pushes
+  - Requires pull request reviews
+
+- Feature Branches (feature/*)
+  - Created for each new feature
+  - Examples:
+    - feature/strava-auth
+    - feature/dashboard
+    - feature/virtual-events
+
+- Fix Branches (fix/*)
+  - Created for bug fixes
+  - Examples:
+    - fix/test-coverage
+    - fix/loading-state
+    - fix/auth-flow
+
+- Test Branches (test/*)
+  - Created for test implementations
+  - Examples:
+    - test/events-component
+    - test/redux-store
+    - test/integration
+
+### Branch Workflow
+1. Create new branch from main
+2. Develop and test feature
+3. Create pull request
+4. Code review
+5. Merge to main
+6. Delete feature branch

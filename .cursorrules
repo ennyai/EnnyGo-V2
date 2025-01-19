@@ -1,0 +1,224 @@
+# .cusrorrules
+
+projectContext:
+  name: "EnnyGo"
+  description: >
+    EnnyGo is a web application designed to enhance athletes' experience by integrating with Strava,
+    generating creative activity names, and enabling virtual ultra-endurance events.
+    The platform fosters community engagement through live event tracking and a blog section.
+  technologies:
+    - React (functional components + Hooks)
+    - JavaScript (ES6+)
+    - Vite (for project setup and build)
+    - Express.js (for backend APIs)
+    - MongoDB (database)
+  frameworksUsed:
+    - React
+  notes: >
+    - The EnnyGo app uses Vite for rapid front-end builds and HMR (hot module replacement).
+    - Express.js is used for the back-end REST API, including Strava OAuth/webhook routes.
+    - MongoDB stores user details, Strava tokens, event data, activity history, and blog posts.
+    - Redux or React Context can be used to manage global state for user sessions, event data, etc.
+    - Jest and React Testing Library are recommended for test coverage.
+    - Always check the progress.md file before starting a new task
+    - always update the progress.md file after completing a task
+    - always create a commit message that describes the changes you made
+
+codingStandards:
+  react:
+    - alwaysUseFunctionalComponents: true
+      # Use React Hooks (useState, useEffect, etc.) instead of class components
+    - preferHooksOverClasses: true
+    - preferConstOverLet: true
+      # Use const for variables that are never reassigned; let only if reassignments are needed
+  namingConventions:
+    - variablesAndFunctions:
+      # Use camelCase for JS variables, functions, and object properties
+      # e.g., getUserActivities, generateCreativeTitle
+    - components:
+      # Use PascalCase for React components
+      # e.g., ActivityNameGenerator, VirtualEventTracker
+    - directoriesAndFiles:
+      # Use kebab-case for folder and file names (except for React components)
+      # e.g., event-tracker, creative-names, store, hooks
+    - constants:
+      # Use UPPER_CASE for constants
+      # e.g., STRAVA_CLIENT_ID, MAX_TITLE_LENGTH
+  readability:
+    - maxLineLength: 100
+      # Lines of code should not exceed 100 characters where possible
+    - indentation:
+      # Use 2 spaces for indentation
+    - noTrailingSpaces: true
+  quoteStyle:
+    - preferSingleQuotes: true
+
+preferredLibraries:
+  stateManagement:
+    - redux:
+      version: "^4.2.0"
+      # If the app scales with complex global states (e.g., user profiles, event data, blog posts)
+    - reactContext:
+      # Suitable for smaller, module-contained state management
+  routing:
+    - reactRouter:
+      version: "^6.0.0"
+      # Handle client-side routing (e.g., /activities, /events, /blog)
+  forms:
+    - reactHookForm:
+      version: "^7.0.0"
+      # Manage form state for user registration, event creation, etc.
+  httpRequests:
+    - axios:
+      version: "^1.0.0"
+      # For making HTTP requests to the Strava API or internal EnnyGo APIs
+
+fileStructure:
+  srcDirectory: true
+  folders:
+    - /components:
+      description: >
+        Reusable and shared React components, each in its own folder with an index.js
+        (e.g., buttons, modals, activity list items, map components).
+    - /pages:
+      description: >
+        React components for main routes/pages (e.g., Home, Dashboard, VirtualEvents, Blog).
+    - /styles:
+      description: >
+        Global styles, theme definitions, resets, or shared style utilities (CSS modules or styled-components).
+    - /store:
+      description: >
+        Redux slices or React Context providers for EnnyGo states
+        (e.g., user auth, Strava tokens, events, blog content).
+    - /hooks:
+      description: >
+        Custom hooks for encapsulating logic (e.g., useStravaAuth, useActivityNaming).
+    - /utils:
+      description: >
+        Helper or utility functions for name generation, data formatting, or route calculations.
+    - /tests:
+      description: >
+        All test files. May mirror component structure or follow a feature-based approach.
+        Includes unit and integration tests for activities, events, blog, etc.
+
+performanceGuidelines:
+  reactOptimizations:
+    - useMemoUseCallback:
+      # Use useMemo and useCallback when memoizing values or functions that could cause re-renders
+    - reactMemo:
+      # Consider React.memo for components if props are stable
+    - lazyLoading:
+      # Use React.lazy/Suspense to code-split large modules (like event maps or blog sections)
+  generalOptimizations:
+    - minimizeRe-renders:
+      # Avoid unnecessary re-renders by splitting components logically and passing down minimal props
+    - optimizeAssets:
+      # Compress images and static assets used for event route maps or user avatars
+
+testingRequirements:
+  framework: Jest
+  libraries:
+    - reactTestingLibrary:
+        version: "^13.0.0"
+  coverage:
+    - minimumCoverageThreshold: 80
+    - coverageTypes:
+      - unitTests
+      - integrationTests
+    - testFileNamingConvention:
+      # *.test.js|jsx or *.spec.js|jsx
+  snapshotTesting: true
+  bestPractices:
+    - testSetupFile: src/tests/setupTests.js
+    - avoidTestingImplementationDetails: true
+      # Emphasize user-facing behaviors (e.g., ensuring the correct creative name updates on the screen)
+
+documentationGuidelines:
+  codeComments:
+    # Use inline comments for complex logic, e.g., generating an alternate name if ":(" is in the title
+  jsDoc:
+    - required: true
+      # For public functions, especially for name-generation logic or complex event calculations
+    - standardFormat: true
+      # Include @param, @returns, etc.
+  propTypes:
+    - usage:
+      # Use PropTypes (or TypeScript interfaces if migrating to TS) for React components
+    - requiredProps:
+      # Mark required props (e.g., user data, event data) as such
+  readmeAndWiki:
+    - maintainProjectDocs: true
+      # Keep a README with instructions on how to connect to Strava, how the naming logic works, etc.
+
+errorHandling:
+  approach:
+    - globalErrorBoundary:
+      # Include an ErrorBoundary to catch unhandled React errors
+    - logging:
+      # Integrate a logging/monitoring service (e.g., Sentry) for production issues
+    - handlePromiseRejections:
+      # Always handle rejections in async/await, especially for Strava API calls
+  userNotification:
+    - showFriendlyErrorMessages: true
+      # E.g., “Failed to fetch activity. Please try again.” instead of raw errors
+
+languageSpecificInstructions:
+  javascript:
+    - eslint:
+        enabled: true
+        config: "eslint:recommended"
+    - prettier:
+        enabled: true
+        config: "prettier.config.js"
+    - noImplicitGlobals: true
+    - useStrictMode: true
+
+frameworkSpecificRules:
+  react:
+    - componentNaming:
+      # Use PascalCase for all component names (e.g., CreativeTitleGenerator, VirtualEventMap)
+    - hooksRules:
+      # Follow the Rules of Hooks: only call Hooks at the top level of React functions
+    - jsxSyntax:
+      # Maintain proper JSX structure, formatting, and linting
+  vite:
+    - viteConfig:
+      # Keep vite.config.js clean and maintain any necessary React plugins
+      # Include necessary plugins (e.g., @vitejs/plugin-react) for React support
+    - assetHandling:
+      # Leverage Vite’s asset handling for images (e.g., event routes, user profile pictures)
+    - environmentVariables:
+      # Use VITE_ prefixed environment variables for Strava client ID and secrets in local dev
+    - hotModuleReplacement:
+      # Vite's HMR for quick iteration on UI changes
+
+branchingStrategy:
+  mainBranch: main
+  types:
+    - feature:
+        prefix: "feature/"
+        description: "For new features and enhancements"
+        example: "feature/strava-auth"
+    - fix:
+        prefix: "fix/"
+        description: "For bug fixes and issue resolutions"
+        example: "fix/test-coverage"
+    - test:
+        prefix: "test/"
+        description: "For adding or updating tests"
+        example: "test/events-component"
+  rules:
+    - Always create a new branch for each feature/fix
+    - Use descriptive branch names following the prefix convention
+    - Keep branches focused on single features or fixes
+    - Delete branches after merging to maintain cleanliness
+  workflow:
+    1. Create branch from main
+    2. Develop and test feature
+    3. Create pull request
+    4. Review and merge back to main
+  commitMessages:
+    - Use present tense ("Add feature" not "Added feature")
+    - Be descriptive but concise
+    - Reference issue numbers if applicable
+    - Include scope of changes
