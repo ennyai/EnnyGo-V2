@@ -11,9 +11,4 @@ healthcheckInterval = 30
 
 [nixpacks]
 node_version = "18.x"
-install_cmd = "npm install"
-plan = [
-    { name = "install", command = "npm install --legacy-peer-deps" },
-    { name = "build", command = "ROLLUP_SKIP_LOAD_NATIVE_PLUGIN=true npm run build" },
-    { name = "start", command = "npm start" }
-] 
+install_cmd = "npm install" 
