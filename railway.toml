@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install --include=dev && ROLLUP_SKIP_LOAD_NATIVE_PLUGIN=true npm run build"
+buildCommand = "npm install --legacy-peer-deps && ROLLUP_SKIP_LOAD_NATIVE_PLUGIN=true npm run build"
 
 [deploy]
 startCommand = "npm start"
@@ -10,4 +10,10 @@ restartPolicyType = "always"
 healthcheckInterval = 30
 
 [nixpacks]
-install_cmd = "npm install --include=dev" 
+node_version = "18.x"
+install_cmd = "npm install --legacy-peer-deps"
+plan = [
+    { name = "install", command = "npm install --legacy-peer-deps" },
+    { name = "build", command = "ROLLUP_SKIP_LOAD_NATIVE_PLUGIN=true npm run build" },
+    { name = "start", command = "npm start" }
+] 
