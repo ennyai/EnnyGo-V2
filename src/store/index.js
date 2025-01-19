@@ -3,6 +3,7 @@ import authReducer from './slices/authSlice';
 import eventReducer from './slices/eventSlice';
 import activityReducer from './slices/activitySlice';
 import uiReducer from './slices/uiSlice';
+import stravaReducer from './slices/stravaSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     events: eventReducer,
     activities: activityReducer,
     ui: uiReducer,
+    strava: stravaReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -18,4 +20,6 @@ export const store = configureStore({
         ignoredActions: ['auth/setCredentials'],
       },
     }),
-}); 
+});
+
+export default store; 

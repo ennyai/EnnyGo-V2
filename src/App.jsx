@@ -1,19 +1,19 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
-import Home from './pages/Home';
+import { Toaster } from './components/ui/toaster';
 
-// Lazy load other pages
+// Lazy load components
+const Home = React.lazy(() => import('./pages/Home'));
+const Login = React.lazy(() => import('./pages/Login'));
 const Events = React.lazy(() => import('./pages/Events'));
 const Blog = React.lazy(() => import('./pages/Blog'));
-const Login = React.lazy(() => import('./pages/Login'));
-const SignUp = React.lazy(() => import('./pages/SignUp'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 
 function App() {
   return (
     <Router>
-      <React.Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div>Loading...</div>}>
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Home />} />
@@ -21,10 +21,10 @@ function App() {
             <Route path="events" element={<Events />} />
             <Route path="blog" element={<Blog />} />
             <Route path="login" element={<Login />} />
-            <Route path="signup" element={<SignUp />} />
           </Route>
         </Routes>
-      </React.Suspense>
+      </Suspense>
+      <Toaster />
     </Router>
   );
 }

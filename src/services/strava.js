@@ -1,0 +1,102 @@
+import axios from 'axios';
+import { tokenManager } from '@/utils/token-manager';
+
+const STRAVA_CONFIG = {
+  clientId: import.meta.env.VITE_STRAVA_CLIENT_ID,
+  clientSecret: import.meta.env.VITE_STRAVA_CLIENT_SECRET,
+  redirectUri: import.meta.env.VITE_STRAVA_REDIRECT_URI,
+  authUrl: import.meta.env.VITE_STRAVA_AUTH_URL,
+  tokenUrl: import.meta.env.VITE_STRAVA_TOKEN_URL,
+};
+
+class StravaService {
+  static getAuthUrl() {
+    // Updated scopes to include read and write permissions
+    const scope = 'read,profile:read_all,activity:read,activity:read_all,activity:write';
+    return `${STRAVA_CONFIG.authUrl}?client_id=${STRAVA_CONFIG.clientId}&response_type=code&redirect_uri=${STRAVA_CONFIG.redirectUri}&scope=${scope}&approval_prompt=force`;
+  }
+
+  static async exchangeToken(code) {
+    try {
+      console.log('Exchanging token with code:', code);
+      const params = new URLSearchParams({
+        client_id: STRAVA_CONFIG.clientId,
+        client_secret: STRAVA_CONFIG.clientSecret,
+        code: code,
+        grant_type: 'authorization_code',
+      });
+
+      console.log('Token exchange URL:', `${STRAVA_CONFIG.tokenUrl}?${params.toString()}`);
+      const response = await axios.post(`${STRAVA_CONFIG.tokenUrl}?${params.toString()}`);
+      console.log('Token exchange response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error exchanging token:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  static async getAthleteData(accessToken) {
+    try {
+      // If no token is provided, get a valid one
+      const token = accessToken || await tokenManager.getValidToken();
+      
+      const response = await axios.get('https://www.strava.com/api/v3/athlete', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log('Athlete data:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching athlete data:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  static async getActivities(params = {}) {
+    try {
+      const token = await tokenManager.getValidToken();
+      const { page = 1, per_page = 30, before, after } = params;
+      
+      const queryParams = new URLSearchParams({
+        page,
+        per_page,
+        ...(before && { before }),
+        ...(after && { after })
+      });
+
+      const response = await axios.get(`https://www.strava.com/api/v3/athlete/activities?${queryParams}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log(`Fetched ${response.data.length} activities`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching activities:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  static async refreshToken(refreshToken) {
+    try {
+      const params = new URLSearchParams({
+        client_id: STRAVA_CONFIG.clientId,
+        client_secret: STRAVA_CONFIG.clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+      });
+
+      const response = await axios.post(`${STRAVA_CONFIG.tokenUrl}?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error refreshing token:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+}
+
+export default StravaService; 
