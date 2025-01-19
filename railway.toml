@@ -3,8 +3,11 @@ builder = "nixpacks"
 buildCommand = "npm install && npm run build"
 
 [deploy]
-startCommand = "node server.js"
+startCommand = "npm start"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "always"
-healthcheckInterval = 30 
+healthcheckInterval = 30
+
+[nixpacks]
+install_cmd = "npm install" 
