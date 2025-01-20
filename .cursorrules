@@ -160,7 +160,7 @@ errorHandling:
       # Always handle rejections in async/await, especially for Strava API calls
   userNotification:
     - showFriendlyErrorMessages: true
-      # E.g., “Failed to fetch activity. Please try again.” instead of raw errors
+      # E.g., "Failed to fetch activity. Please try again." instead of raw errors
 
 languageSpecificInstructions:
   javascript:
@@ -186,39 +186,71 @@ frameworkSpecificRules:
       # Keep vite.config.js clean and maintain any necessary React plugins
       # Include necessary plugins (e.g., @vitejs/plugin-react) for React support
     - assetHandling:
-      # Leverage Vite’s asset handling for images (e.g., event routes, user profile pictures)
+      # Leverage Vite's asset handling for images (e.g., event routes, user profile pictures)
     - environmentVariables:
       # Use VITE_ prefixed environment variables for Strava client ID and secrets in local dev
     - hotModuleReplacement:
       # Vite's HMR for quick iteration on UI changes
 
-branchingStrategy:
-  mainBranch: main
-  types:
-    - feature:
-        prefix: "feature/"
-        description: "For new features and enhancements"
-        example: "feature/strava-auth"
-    - fix:
-        prefix: "fix/"
-        description: "For bug fixes and issue resolutions"
-        example: "fix/test-coverage"
-    - test:
-        prefix: "test/"
-        description: "For adding or updating tests"
-        example: "test/events-component"
-  rules:
-    - Always create a new branch for each feature/fix
-    - Use descriptive branch names following the prefix convention
-    - Keep branches focused on single features or fixes
-    - Delete branches after merging to maintain cleanliness
-  workflow:
-    1. Create branch from main
-    2. Develop and test feature
-    3. Create pull request
-    4. Review and merge back to main
-  commitMessages:
-    - Use present tense ("Add feature" not "Added feature")
-    - Be descriptive but concise
-    - Reference issue numbers if applicable
-    - Include scope of changes
+## Development Workflow
+### Branching Strategy
+- Main Branch (main)
+  - Contains production-ready code
+  - Deployed to Railway
+  - Protected from direct pushes
+  - Only accepts merges from staging
+
+- Staging Branch (staging)
+  - Contains completed features ready for production
+  - Used for final testing before production
+  - Accepts merges from development
+  - Requires pull request reviews
+
+- Development Branch (development)
+  - Contains active feature development
+  - All new features start here
+  - Regular integration of new features
+  - Testing ground for new functionality
+
+### Feature Development Flow
+1. Create feature branch from development
+2. Develop and test feature
+3. Create PR to merge into development
+4. After feature is stable in development:
+   - Create PR to merge into staging
+   - Test in staging environment
+5. After staging verification:
+   - Create PR to merge into main
+   - Deploy to production
+
+### Environment Strategy
+- Production (main branch)
+  - Deployed to Railway
+  - Requires all environment variables
+  - Stable, tested code only
+
+- Staging (staging branch)
+  - Testing environment
+  - Mirrors production configuration
+  - Used for final verification
+
+- Development (development branch)
+  - Local development
+  - Feature testing
+  - Integration testing
+
+### Deployment Rules
+1. main branch
+   - Automatic deployment to Railway
+   - Requires staging approval
+   - Must pass all tests
+
+2. staging branch
+   - Requires development approval
+   - Must pass integration tests
+   - Environment variables must be configured
+
+3. development branch
+   - Regular integration of features
+   - Must pass unit tests
+   - Used for feature verification
