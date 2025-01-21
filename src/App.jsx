@@ -12,6 +12,7 @@ const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Events = React.lazy(() => import('./pages/Events'));
 const Blog = React.lazy(() => import('./pages/Blog'));
 const Profile = React.lazy(() => import('./pages/Profile'));
+const Settings = React.lazy(() => import('./pages/Settings'));
 
 function App() {
   return (
@@ -55,6 +56,14 @@ function App() {
             element={
               <Suspense fallback={<div>Loading profile...</div>}>
                 <Profile />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <Suspense fallback={<div>Loading settings...</div>}>
+                <Settings />
               </Suspense>
             }
           />

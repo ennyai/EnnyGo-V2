@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { tokenManager } from '@/utils/token-manager';
+import { storage } from '../utils/storage';
 
 const STRAVA_CONFIG = {
   clientId: import.meta.env.VITE_STRAVA_CLIENT_ID,
@@ -38,12 +38,9 @@ class StravaService {
 
   static async getAthleteData(accessToken) {
     try {
-      // If no token is provided, get a valid one
-      const token = accessToken || await tokenManager.getValidToken();
-      
       const response = await axios.get('https://www.strava.com/api/v3/athlete', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${accessToken}`
         }
       });
 
@@ -57,7 +54,11 @@ class StravaService {
 
   static async getActivities(params = {}) {
     try {
-      const token = await tokenManager.getValidToken();
+      const tokens = storage.getStravaTokens();
+      if (!tokens || !tokens.access_token) {
+        throw new Error('No access token found');
+      }
+
       const { page = 1, per_page = 30, before, after } = params;
       
       const queryParams = new URLSearchParams({
@@ -69,7 +70,7 @@ class StravaService {
 
       const response = await axios.get(`https://www.strava.com/api/v3/athlete/activities?${queryParams}`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${tokens.access_token}`
         }
       });
 
@@ -117,7 +118,6 @@ class StravaService {
   }
 
   static generateCreativeTitle(activity) {
-    // This is a placeholder - you can implement your creative title generation logic here
     const type = activity.type.toLowerCase();
     const distance = (activity.distance / 1000).toFixed(1);
     const time = Math.floor(activity.moving_time / 60);

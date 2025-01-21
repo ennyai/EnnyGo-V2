@@ -6,39 +6,58 @@ const STORAGE_KEYS = {
 
 export const storage = {
   setStravaTokens: (tokens) => {
-    localStorage.setItem(STORAGE_KEYS.STRAVA_TOKENS, JSON.stringify(tokens));
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(STORAGE_KEYS.STRAVA_TOKENS, JSON.stringify(tokens));
+    }
   },
 
   getStravaTokens: () => {
-    const tokens = localStorage.getItem(STORAGE_KEYS.STRAVA_TOKENS);
-    return tokens ? JSON.parse(tokens) : null;
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const tokens = localStorage.getItem(STORAGE_KEYS.STRAVA_TOKENS);
+      return tokens ? JSON.parse(tokens) : null;
+    }
+    return null;
   },
 
   setStravaAthlete: (athlete) => {
-    localStorage.setItem(STORAGE_KEYS.STRAVA_ATHLETE, JSON.stringify(athlete));
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(STORAGE_KEYS.STRAVA_ATHLETE, JSON.stringify(athlete));
+    }
   },
 
   getStravaAthlete: () => {
-    const athlete = localStorage.getItem(STORAGE_KEYS.STRAVA_ATHLETE);
-    return athlete ? JSON.parse(athlete) : null;
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const athlete = localStorage.getItem(STORAGE_KEYS.STRAVA_ATHLETE);
+      return athlete ? JSON.parse(athlete) : null;
+    }
+    return null;
   },
 
   clearStravaData: () => {
-    localStorage.removeItem(STORAGE_KEYS.STRAVA_TOKENS);
-    localStorage.removeItem(STORAGE_KEYS.STRAVA_ATHLETE);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.removeItem(STORAGE_KEYS.STRAVA_TOKENS);
+      localStorage.removeItem(STORAGE_KEYS.STRAVA_ATHLETE);
+    }
   },
 
   setSettings: (settings) => {
-    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    }
   },
 
   getSettings: () => {
-    const settings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-    return settings ? JSON.parse(settings) : {};
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const settings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+      return settings ? JSON.parse(settings) : {};
+    }
+    return {};
   },
 
   clearSettings: () => {
-    localStorage.removeItem(STORAGE_KEYS.SETTINGS);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.removeItem(STORAGE_KEYS.SETTINGS);
+    }
   }
 };
 

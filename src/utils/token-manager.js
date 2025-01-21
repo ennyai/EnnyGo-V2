@@ -1,7 +1,7 @@
-import { storage } from './storage';
-import StravaService from '@/services/strava';
+const { storage } = require('../server/utils/storage');
+const axios = require('axios');
 
-export const tokenManager = {
+const tokenManager = {
   isTokenExpired: (expiresAt) => {
     // Check if token expires in the next 5 minutes
     return Date.now() >= (expiresAt * 1000) - (5 * 60 * 1000);
@@ -21,7 +21,14 @@ export const tokenManager = {
 
     // Token is expired, try to refresh
     try {
-      const newTokens = await StravaService.refreshToken(tokens.refresh_token);
+      const response = await axios.post('https://www.strava.com/oauth/token', {
+        client_id: process.env.STRAVA_CLIENT_ID,
+        client_secret: process.env.STRAVA_CLIENT_SECRET,
+        refresh_token: tokens.refresh_token,
+        grant_type: 'refresh_token'
+      });
+      
+      const newTokens = response.data;
       storage.setStravaTokens(newTokens);
       return newTokens.access_token;
     } catch (error) {
@@ -30,4 +37,6 @@ export const tokenManager = {
       throw new Error('Failed to refresh token');
     }
   }
-}; 
+};
+
+module.exports = { tokenManager }; 

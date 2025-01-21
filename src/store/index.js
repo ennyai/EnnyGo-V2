@@ -4,6 +4,7 @@ import eventReducer from './slices/eventSlice';
 import activityReducer from './slices/activitySlice';
 import uiReducer from './slices/uiSlice';
 import stravaReducer from './slices/stravaSlice';
+import settingsReducer from './slices/settingsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     activities: activityReducer,
     ui: uiReducer,
     strava: stravaReducer,
+    settings: settingsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

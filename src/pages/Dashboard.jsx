@@ -204,13 +204,21 @@ export default function Dashboard() {
   const handleStravaCallback = async (code) => {
     try {
       dispatch(startConnecting());
-      const tokenData = await StravaService.exchangeToken(code);
-      const athleteData = await StravaService.getAthleteData(tokenData.access_token);
+      console.log('Starting token exchange with code:', code);
       
+      const tokenData = await StravaService.exchangeToken(code);
+      console.log('Received token data:', tokenData);
+      
+      const athleteData = await StravaService.getAthleteData(tokenData.access_token);
+      console.log('Received athlete data:', athleteData);
+      
+      console.log('Storing tokens in localStorage...');
       storage.setStravaTokens(tokenData);
       storage.setStravaAthlete(athleteData);
       
+      console.log('Dispatching connection success...');
       dispatch(connectionSuccess({ ...tokenData, athlete: athleteData }));
+      
       toast({
         title: "Connected to Strava",
         description: `Welcome, ${athleteData.firstname}! Your Strava account is now connected.`,
