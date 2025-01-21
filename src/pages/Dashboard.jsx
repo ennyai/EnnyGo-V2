@@ -15,6 +15,8 @@ import {
 import { useActivities } from '@/hooks/useActivities';
 import { Trophy, MapPin, Timer, Activity } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { supabase } from '@/lib/supabase';
+import { useUser } from '@/hooks/useUser';
 
 function formatDuration(seconds) {
   const hours = Math.floor(seconds / 3600);
@@ -90,6 +92,7 @@ export default function Dashboard() {
   const { isConnected, isConnecting, error: stravaError, athlete } = useSelector((state) => state.strava);
   const processedCode = useRef(null);
   const { activities, isLoading, error, hasMore, fetchActivities, loadMore } = useActivities();
+  const { user } = useUser();
 
   // Add state for visible activities count
   const [visibleCount, setVisibleCount] = React.useState(5);
@@ -212,7 +215,36 @@ export default function Dashboard() {
       const athleteData = await StravaService.getAthleteData(tokenData.access_token);
       console.log('Received athlete data:', athleteData);
       
-      console.log('Storing tokens in localStorage...');
+      // Save tokens to Supabase
+      const { error: tokenError } = await supabase
+        .from('strava_tokens')
+        .upsert({
+          user_id: user.id,
+          access_token: tokenData.access_token,
+          refresh_token: tokenData.refresh_token,
+          expires_at: tokenData.expires_at,
+          strava_athlete_id: athleteData.id.toString()
+        });
+
+      if (tokenError) {
+        console.error('Error saving tokens:', tokenError);
+        throw new Error('Failed to save Strava tokens');
+      }
+
+      // Save user settings with activity watching enabled by default
+      const { error: settingsError } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user.id,
+          watch_activities: true
+        });
+
+      if (settingsError) {
+        console.error('Error saving settings:', settingsError);
+        throw new Error('Failed to save user settings');
+      }
+      
+      // Save to localStorage for frontend use
       storage.setStravaTokens(tokenData);
       storage.setStravaAthlete(athleteData);
       

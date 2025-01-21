@@ -1,10 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { selectIsAuthenticated, selectCurrentUser, logout } from '../../store/slices/authSlice';
-import { setSidebarState } from '../../store/slices/uiSlice';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Button } from '../ui/button';
+import { supabase } from '@/lib/supabase';
 import {
   Sheet,
   SheetContent,
@@ -13,38 +11,33 @@ import {
   SheetTrigger,
 } from '../ui/sheet';
 
-const Navbar = () => {
-  const dispatch = useDispatch();
-  const isAuthenticated = useSelector(selectIsAuthenticated);
-  const currentUser = useSelector(selectCurrentUser);
-
-  const handleLogout = () => {
-    dispatch(logout());
+const Navbar = ({ isAuthenticated }) => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
   };
 
   const NavLinks = ({ className = "", onClick }) => (
     <div className={`flex gap-8 ${className}`}>
-      <Link to="/dashboard" className="text-base font-medium transition-colors hover:text-primary hover:scale-105" onClick={onClick}>
-        Dashboard
-      </Link>
       <Link to="/events" className="text-base font-medium transition-colors hover:text-primary hover:scale-105" onClick={onClick}>
         Events
       </Link>
       <Link to="/blog" className="text-base font-medium transition-colors hover:text-primary hover:scale-105" onClick={onClick}>
         Blog
       </Link>
+      {isAuthenticated && (
+        <Link to="/dashboard" className="text-base font-medium transition-colors hover:text-primary hover:scale-105" onClick={onClick}>
+          Dashboard
+        </Link>
+      )}
     </div>
   );
 
   const AuthButtons = ({ className = "", onClick }) => (
     <div className={`flex items-center gap-4 ${className}`}>
       {isAuthenticated ? (
-        <>
-          <span className="text-base font-medium">{currentUser?.name}</span>
-          <Button size="lg" variant="ghost" onClick={handleLogout}>
-            Logout
-          </Button>
-        </>
+        <Button size="lg" variant="ghost" onClick={handleLogout}>
+          Logout
+        </Button>
       ) : (
         <>
           <Link to="/login" onClick={onClick}>
@@ -91,8 +84,8 @@ const Navbar = () => {
                   <SheetTitle className="text-xl">EnnyGo</SheetTitle>
                 </SheetHeader>
                 <div className="flex flex-col gap-4 py-4">
-                  <NavLinks onClick={() => dispatch(setSidebarState({ isOpen: false }))} />
-                  <AuthButtons onClick={() => dispatch(setSidebarState({ isOpen: false }))} />
+                  <NavLinks onClick={() => {}} />
+                  <AuthButtons onClick={() => {}} />
                 </div>
               </SheetContent>
             </Sheet>

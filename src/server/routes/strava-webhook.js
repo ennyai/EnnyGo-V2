@@ -9,6 +9,48 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
+// Test endpoint to simulate webhook event (only in development)
+if (process.env.NODE_ENV === 'development') {
+  router.post('/webhook/test', async (req, res) => {
+    try {
+      const testEvent = {
+        aspect_type: 'create',
+        object_type: 'activity',
+        object_id: req.body.activity_id,
+        owner_id: req.body.user_id,
+        updates: {},
+        subscription_id: 272117,
+      };
+
+      // Forward the test event to the webhook handler
+      const webhookResponse = await new Promise((resolve) => {
+        router.handle(
+          {
+            method: 'POST',
+            url: '/webhook',
+            body: testEvent,
+            headers: {},
+          },
+          {
+            status: (code) => ({
+              send: (message) => resolve({ code, message }),
+            }),
+          }
+        );
+      });
+
+      res.json({
+        message: 'Test event processed',
+        webhookResponse,
+        testEvent,
+      });
+    } catch (error) {
+      console.error('Error processing test event:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+}
+
 // Webhook verification endpoint
 router.get('/webhook', (req, res) => {
   const VERIFY_TOKEN = process.env.STRAVA_VERIFY_TOKEN;
@@ -36,11 +78,13 @@ router.post('/webhook', async (req, res) => {
   try {
     // Only process 'create' events for activities
     if (event.aspect_type === 'create' && event.object_type === 'activity') {
-      // Get user's settings and tokens from Supabase
+      console.log('Processing activity creation event:', event);
+      
+      // First get the tokens for this Strava athlete
       const { data: tokens, error: tokenError } = await supabase
         .from('strava_tokens')
         .select('access_token, user_id')
-        .eq('user_id', event.owner_id)
+        .eq('strava_athlete_id', event.owner_id.toString())
         .single();
 
       if (tokenError) {
@@ -48,24 +92,34 @@ router.post('/webhook', async (req, res) => {
         return;
       }
 
-      // Get user settings
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .select('settings')
-        .eq('id', tokens.user_id)
-        .single();
-
-      if (userError) {
-        console.error('Error fetching user settings:', userError);
+      if (!tokens) {
+        console.error('No tokens found for Strava athlete ID:', event.owner_id);
         return;
       }
 
-      if (user?.settings?.watchActivities) {
+      // Get user settings
+      const { data: userSettings, error: settingsError } = await supabase
+        .from('user_settings')
+        .select('watch_activities')
+        .eq('user_id', tokens.user_id)
+        .single();
+
+      if (settingsError) {
+        console.error('Error fetching user settings:', settingsError);
+        return;
+      }
+
+      const watchActivities = userSettings?.watch_activities ?? false;
+
+      if (watchActivities) {
+        console.log('Activity watching is enabled, processing activity...');
+        
         // Get the full activity details from Strava
         const activity = await StravaService.getActivity(event.object_id, tokens.access_token);
         
         // Generate a creative title
         const newTitle = StravaService.generateCreativeTitle(activity);
+        console.log('Generated new title:', newTitle);
         
         // Update the activity title on Strava
         await StravaService.updateActivityTitle(event.object_id, newTitle, tokens.access_token);
@@ -93,11 +147,45 @@ router.post('/webhook', async (req, res) => {
           return;
         }
 
-        console.log(`Updated activity ${event.object_id} title to: ${newTitle}`);
+        console.log(`Successfully updated activity ${event.object_id} title to: ${newTitle}`);
+      } else {
+        console.log('Activity watching is disabled for user:', tokens.user_id);
       }
     }
   } catch (error) {
     console.error('Error processing webhook event:', error);
+  }
+});
+
+// Create activity endpoint
+router.post('/activities', async (req, res) => {
+  try {
+    const { data: tokens, error: tokenError } = await supabase
+      .from('strava_tokens')
+      .select('access_token, user_id')
+      .eq('user_id', req.body.user_id)
+      .single();
+
+    if (tokenError) {
+      console.error('Error fetching tokens:', tokenError);
+      return res.status(401).json({ error: 'Unable to fetch user tokens' });
+    }
+
+    const activity = await StravaService.createActivity(tokens.access_token, {
+      name: req.body.name || 'My Activity',
+      type: req.body.type || 'Run',
+      start_date_local: req.body.start_date_local || new Date().toISOString(),
+      elapsed_time: req.body.elapsed_time || 3600, // 1 hour in seconds
+      description: req.body.description || 'Activity created via EnnyGo',
+      distance: req.body.distance || 10000, // 10km in meters
+      trainer: req.body.trainer || 0,
+      commute: req.body.commute || 0
+    });
+
+    res.json({ message: 'Activity created successfully', activity });
+  } catch (error) {
+    console.error('Error creating activity:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

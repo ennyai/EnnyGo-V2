@@ -22,7 +22,7 @@ class StravaService {
       );
       return response.data;
     } catch (error) {
-      console.error('Error fetching activity:', error);
+      console.error('Error fetching activity:', error.response?.data || error.message);
       throw error;
     }
   }
@@ -59,6 +59,35 @@ class StravaService {
     ];
     
     return titles[Math.floor(Math.random() * titles.length)];
+  }
+
+  static async createActivity(accessToken, activityData) {
+    try {
+      const response = await axios.post(
+        'https://www.strava.com/api/v3/activities',
+        {
+          name: activityData.name,
+          type: activityData.type,
+          start_date_local: activityData.start_date_local,
+          elapsed_time: activityData.elapsed_time,
+          description: activityData.description,
+          distance: activityData.distance,
+          trainer: activityData.trainer || 0,
+          commute: activityData.commute || 0
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+      
+      console.log('Activity created:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating activity:', error.response?.data || error.message);
+      throw error;
+    }
   }
 }
 
