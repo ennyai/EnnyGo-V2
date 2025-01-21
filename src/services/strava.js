@@ -97,6 +97,41 @@ class StravaService {
       throw error;
     }
   }
+
+  static async updateActivityTitle(activityId, newTitle, accessToken) {
+    try {
+      const response = await axios.put(
+        `https://www.strava.com/api/v3/activities/${activityId}`,
+        { name: newTitle },
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error updating activity title:', error);
+      throw error;
+    }
+  }
+
+  static generateCreativeTitle(activity) {
+    // This is a placeholder - you can implement your creative title generation logic here
+    const type = activity.type.toLowerCase();
+    const distance = (activity.distance / 1000).toFixed(1);
+    const time = Math.floor(activity.moving_time / 60);
+    
+    const titles = [
+      `Epic ${type} Adventure: ${distance}km of Pure Joy!`,
+      `${distance}km ${type} Journey - ${time} Minutes of Freedom`,
+      `Conquering ${distance}km on a ${type} Quest`,
+      `${type} Exploration: ${distance}km of Discovery`,
+      `${time}-Minute ${type} Escape: ${distance}km of Bliss`
+    ];
+    
+    return titles[Math.floor(Math.random() * titles.length)];
+  }
 }
 
 export default StravaService; 

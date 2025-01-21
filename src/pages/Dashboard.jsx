@@ -270,13 +270,6 @@ export default function Dashboard() {
       <div className="container mx-auto max-w-7xl space-y-4 p-8 pt-6">
         <div className="flex items-center justify-between space-y-2">
           <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-          <Button 
-            variant="outline" 
-            onClick={handleStravaDisconnect}
-            className="text-destructive hover:text-destructive"
-          >
-            Disconnect Strava
-          </Button>
         </div>
         
         {/* Stats Cards */}
@@ -408,7 +401,7 @@ export default function Dashboard() {
         </div>
 
         {/* Load More/Less Buttons */}
-        <div className="flex justify-center gap-4 mt-4 col-span-4">
+        <div className="flex justify-center gap-4 mt-4">
           {visibleCount > 5 && (
             <Button onClick={handleSeeLess} variant="outline">
               See Less

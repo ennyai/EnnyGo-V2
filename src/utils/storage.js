@@ -1,6 +1,7 @@
 const STORAGE_KEYS = {
-  STRAVA_TOKENS: 'ennygo_strava_tokens',
-  STRAVA_ATHLETE: 'ennygo_strava_athlete',
+  STRAVA_TOKENS: 'strava_tokens',
+  STRAVA_ATHLETE: 'strava_athlete',
+  SETTINGS: 'enny_settings'
 };
 
 export const storage = {
@@ -26,4 +27,19 @@ export const storage = {
     localStorage.removeItem(STORAGE_KEYS.STRAVA_TOKENS);
     localStorage.removeItem(STORAGE_KEYS.STRAVA_ATHLETE);
   },
-}; 
+
+  setSettings: (settings) => {
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+  },
+
+  getSettings: () => {
+    const settings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+    return settings ? JSON.parse(settings) : {};
+  },
+
+  clearSettings: () => {
+    localStorage.removeItem(STORAGE_KEYS.SETTINGS);
+  }
+};
+
+export { STORAGE_KEYS }; 

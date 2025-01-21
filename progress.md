@@ -319,3 +319,46 @@ src/
 4. Code review
 5. Merge to main
 6. Delete feature branch
+
+## Recent Updates
+- Switched from npm to yarn for package management
+- Added error documentation (see `docs/ERROR_SOLUTIONS.md`)
+- Set up Strava webhook configuration
+- Implemented dashboard layout with proper routing
+- Added UI components from shadcn/ui library
+
+## Current Status
+- Development environment:
+  - Using yarn for package management
+  - Vite for development server
+  - Running on port 3000
+  - Ngrok for webhook testing
+
+## Next Steps
+1. Complete Strava webhook implementation:
+   - Set up webhook endpoint
+   - Handle webhook events
+   - Test with ngrok tunnel
+
+2. Dashboard Features:
+   - Implement activity fetching
+   - Add activity stats visualization
+   - Create activity naming functionality
+
+## Environment Setup
+```bash
+# Development server
+yarn dev
+
+# Building for production
+yarn build
+
+# Running tests
+yarn test
+```
+
+## Important Notes
+- Always use yarn for package management
+- Check ERROR_SOLUTIONS.md for troubleshooting common issues
+- Keep environment variables updated in .env file
+- Use ngrok for testing webhooks locally

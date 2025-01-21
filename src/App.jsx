@@ -1,29 +1,65 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import MainLayout from './components/layout/MainLayout';
 import { Toaster } from './components/ui/toaster';
+import MainLayout from './components/layout/MainLayout';
+import DashboardLayout from './components/layout/DashboardLayout';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import SignUp from './pages/SignUp';
 
-// Lazy load components
-const Home = React.lazy(() => import('./pages/Home'));
-const Login = React.lazy(() => import('./pages/Login'));
+// Lazy load only the larger components
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Events = React.lazy(() => import('./pages/Events'));
 const Blog = React.lazy(() => import('./pages/Blog'));
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const Profile = React.lazy(() => import('./pages/Profile'));
 
 function App() {
   return (
     <Router>
-      <Suspense fallback={<div>Loading...</div>}>
-        <Routes>
-          <Route path="/" element={<MainLayout />}>
-            <Route index element={<Home />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="events" element={<Events />} />
-            <Route path="blog" element={<Blog />} />
-            <Route path="login" element={<Login />} />
-          </Route>
-        </Routes>
-      </Suspense>
+      <Routes>
+        {/* Public routes with top navbar */}
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+        </Route>
+
+        {/* Protected routes with sidebar */}
+        <Route element={<DashboardLayout />}>
+          <Route
+            path="/dashboard"
+            element={
+              <Suspense fallback={<div>Loading dashboard...</div>}>
+                <Dashboard />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/events"
+            element={
+              <Suspense fallback={<div>Loading events...</div>}>
+                <Events />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/blog"
+            element={
+              <Suspense fallback={<div>Loading blog...</div>}>
+                <Blog />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <Suspense fallback={<div>Loading profile...</div>}>
+                <Profile />
+              </Suspense>
+            }
+          />
+        </Route>
+      </Routes>
       <Toaster />
     </Router>
   );

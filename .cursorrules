@@ -158,6 +158,29 @@ errorHandling:
       # Integrate a logging/monitoring service (e.g., Sentry) for production issues
     - handlePromiseRejections:
       # Always handle rejections in async/await, especially for Strava API calls
+  documentation:
+    - location: docs/ERROR_SOLUTIONS.md
+    - format:
+      errorEntry:
+        - title: Clear, descriptive error name
+        - description: Detailed error symptoms and context
+        - rootCause: Underlying causes and triggers
+        - solution: Step-by-step resolution process
+        - prevention: How to avoid the error in future
+    - when:
+      - Major dependency conflicts or changes
+      - Build or compilation failures
+      - Runtime errors affecting core functionality
+      - Environment setup issues
+      - Package manager problems
+      - API integration errors
+    - requirements:
+      - Document immediately while solution is fresh
+      - Include all steps taken to resolve
+      - Add any relevant code snippets
+      - Note environment details if relevant
+      - Update related documentation (README, etc.)
+
   userNotification:
     - showFriendlyErrorMessages: true
       # E.g., "Failed to fetch activity. Please try again." instead of raw errors
