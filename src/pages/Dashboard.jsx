@@ -92,7 +92,7 @@ export default function Dashboard() {
   const { isConnected, isConnecting, error: stravaError, athlete } = useSelector((state) => state.strava);
   const processedCode = useRef(null);
   const { activities, isLoading, error, hasMore, fetchActivities, loadMore } = useActivities();
-  const { user } = useUser();
+  const { user, loading } = useUser();
 
   // Add state for visible activities count
   const [visibleCount, setVisibleCount] = React.useState(5);
@@ -167,13 +167,51 @@ export default function Dashboard() {
 
   const stats = calculateStats();
 
+  // Check for existing Strava connection on mount
   useEffect(() => {
-    const tokens = storage.getStravaTokens();
-    const athlete = storage.getStravaAthlete();
-    if (tokens && athlete) {
-      dispatch(connectionSuccess({ tokens, athlete }));
-    }
-  }, [dispatch]);
+    const checkStravaConnection = async () => {
+      if (!user || isConnected) return;
+
+      try {
+        // Check for tokens in Supabase
+        const { data: tokens, error: tokenError } = await supabase
+          .from('strava_tokens')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (tokenError) {
+          console.error('Error fetching tokens:', tokenError);
+          return;
+        }
+
+        if (tokens) {
+          // Get athlete data from Strava
+          const athleteData = await StravaService.getAthleteData(tokens.access_token);
+          
+          // Save to localStorage for frontend use
+          storage.setStravaTokens({
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token,
+            expires_at: tokens.expires_at
+          });
+          storage.setStravaAthlete(athleteData);
+          
+          // Update Redux state
+          dispatch(connectionSuccess({ 
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token,
+            expires_at: tokens.expires_at,
+            athlete: athleteData 
+          }));
+        }
+      } catch (error) {
+        console.error('Error restoring Strava connection:', error);
+      }
+    };
+
+    checkStravaConnection();
+  }, [user, isConnected, dispatch]);
 
   useEffect(() => {
     if (isConnected) {
@@ -183,6 +221,11 @@ export default function Dashboard() {
 
   // OAuth callback handling
   useEffect(() => {
+    if (loading) {
+      console.log('Waiting for user data to load...');
+      return;
+    }
+
     const queryParams = new URLSearchParams(location.search);
     const code = queryParams.get('code');
     const error = queryParams.get('error');
@@ -202,10 +245,15 @@ export default function Dashboard() {
       handleStravaCallback(code);
       window.history.replaceState({}, '', '/dashboard');
     }
-  }, [location, dispatch, toast, isConnected]);
+  }, [location, dispatch, toast, isConnected, loading, user]);
 
   const handleStravaCallback = async (code) => {
     try {
+      if (loading || !user) {
+        console.log('Waiting for user data...', { loading, user });
+        return; // The useEffect will run again when user is available
+      }
+
       dispatch(startConnecting());
       console.log('Starting token exchange with code:', code);
       
@@ -216,7 +264,12 @@ export default function Dashboard() {
       console.log('Received athlete data:', athleteData);
       
       // Save tokens to Supabase
-      const { error: tokenError } = await supabase
+      console.log('Saving tokens to Supabase...', {
+        user_id: user.id,
+        strava_athlete_id: athleteData.id.toString()
+      });
+
+      const { data: tokenResult, error: tokenError } = await supabase
         .from('strava_tokens')
         .upsert({
           user_id: user.id,
@@ -224,25 +277,32 @@ export default function Dashboard() {
           refresh_token: tokenData.refresh_token,
           expires_at: tokenData.expires_at,
           strava_athlete_id: athleteData.id.toString()
-        });
+        })
+        .select();
 
       if (tokenError) {
         console.error('Error saving tokens:', tokenError);
         throw new Error('Failed to save Strava tokens');
       }
 
+      console.log('Successfully saved tokens:', tokenResult);
+
       // Save user settings with activity watching enabled by default
-      const { error: settingsError } = await supabase
+      console.log('Saving user settings...');
+      const { data: settingsResult, error: settingsError } = await supabase
         .from('user_settings')
         .upsert({
           user_id: user.id,
           watch_activities: true
-        });
+        })
+        .select();
 
       if (settingsError) {
         console.error('Error saving settings:', settingsError);
         throw new Error('Failed to save user settings');
       }
+
+      console.log('Successfully saved settings:', settingsResult);
       
       // Save to localStorage for frontend use
       storage.setStravaTokens(tokenData);
@@ -256,7 +316,8 @@ export default function Dashboard() {
         description: `Welcome, ${athleteData.firstname}! Your Strava account is now connected.`,
       });
     } catch (error) {
-      console.error('Connection error:', error.response?.data || error.message);
+      console.error('Connection error:', error);
+      console.error('Error details:', error.response?.data || error.message);
       dispatch(connectionFailed(error.message));
       toast({
         variant: "destructive",

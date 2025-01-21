@@ -58,6 +58,12 @@ export const storage = {
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.removeItem(STORAGE_KEYS.SETTINGS);
     }
+  },
+
+  clearAll: () => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.clear();
+    }
   }
 };
 

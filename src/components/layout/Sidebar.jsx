@@ -1,5 +1,7 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { useToast } from '@/components/ui/use-toast';
 import { cn } from '../../lib/utils';
 import {
   LayoutDashboard,
@@ -18,6 +20,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '../ui/sheet';
+import { supabase } from '@/lib/supabase';
+import { storage } from '@/utils/storage';
+import { disconnect } from '@/store/slices/stravaSlice';
 
 const NavigationItems = ({ className }) => {
   const location = useLocation();
@@ -79,6 +84,30 @@ const NavigationItems = ({ className }) => {
 };
 
 export default function Sidebar() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      storage.clearStravaData();
+      dispatch(disconnect());
+      navigate('/');
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+      });
+    }
+  };
+
   return (
     <>
       {/* Mobile Sidebar */}
@@ -99,7 +128,10 @@ export default function Sidebar() {
           <div className="flex h-full flex-col py-4">
             <NavigationItems className="mt-8" />
             <div className="border-t pt-4">
-              <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-primary">
+              <button 
+                onClick={handleSignOut}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+              >
                 <LogOut className="h-4 w-4" />
                 Sign Out
               </button>
@@ -115,7 +147,10 @@ export default function Sidebar() {
         </Link>
         <NavigationItems className="mt-8" />
         <div className="border-t pt-4">
-          <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-primary">
+          <button 
+            onClick={handleSignOut}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+          >
             <LogOut className="h-4 w-4" />
             Sign Out
           </button>

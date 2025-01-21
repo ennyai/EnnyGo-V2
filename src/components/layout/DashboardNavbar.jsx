@@ -1,11 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { LogOut } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { disconnect } from '../../store/slices/stravaSlice';
 import { storage } from '../../utils/storage';
 import { useToast } from '../ui/use-toast';
+import { supabase } from '@/lib/supabase';
 import {
   Tooltip,
   TooltipContent,
@@ -18,6 +19,7 @@ import {
 
 export default function DashboardNavbar() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { isConnected } = useSelector((state) => state.strava);
 
@@ -29,6 +31,26 @@ export default function DashboardNavbar() {
       description: "Your Strava connection has been removed.",
       variant: "default",
     });
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      storage.clearStravaData();
+      dispatch(disconnect());
+      navigate('/');
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+      });
+    }
   };
 
   return (
@@ -61,6 +83,7 @@ export default function DashboardNavbar() {
                 <Button 
                   variant="ghost" 
                   className="gap-2 hover:bg-muted"
+                  onClick={handleSignOut}
                 >
                   <LogOut className="h-4 w-4" />
                   Sign Out
