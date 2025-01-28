@@ -16,12 +16,8 @@ COPY . .
 # Build the frontend
 RUN yarn build
 
-# Set production environment
-ENV NODE_ENV=production
-ENV PORT=3001
-
 # Expose the port the app runs on
-EXPOSE $PORT
+EXPOSE 3001
 
 # Start the server
 CMD ["yarn", "start"] 

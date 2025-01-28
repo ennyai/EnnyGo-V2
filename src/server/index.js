@@ -4,7 +4,12 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import stravaWebhookRouter from './routes/strava-webhook.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const port = process.env.PORT || 3001;
 const nodeEnv = process.env.NODE_ENV || 'development';
@@ -20,7 +25,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Routes
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../../dist')));
+
+// API Routes
 app.use('/api/strava', stravaWebhookRouter);
 
 // Health check endpoint
@@ -29,6 +37,11 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     environment: nodeEnv
   });
+});
+
+// Serve React app for all other routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../dist/index.html'));
 });
 
 // Error handling middleware
