@@ -13,14 +13,8 @@ RUN yarn install
 # Copy the rest of the application
 COPY . .
 
-# Build arguments for Vite
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_ANON_KEY
-
-# Build the frontend with environment variables
-RUN VITE_SUPABASE_URL=${VITE_SUPABASE_URL} \
-    VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY} \
-    yarn build
+# Build the frontend
+RUN yarn build
 
 # Production stage
 FROM node:20-slim
@@ -37,11 +31,9 @@ RUN yarn install --production
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src/server ./src/server
 
-# Set production environment variables
+# Set runtime environment
 ENV NODE_ENV=production
 ENV PORT=3001
-ENV VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
-ENV VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
 
 # Expose the port
 EXPOSE $PORT
