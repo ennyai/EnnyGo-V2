@@ -4,6 +4,14 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// Log the actual values (but mask the key)
+console.log('Supabase Configuration:', {
+  url: supabaseUrl || 'MISSING',
+  key: supabaseAnonKey ? 'PRESENT' : 'MISSING',
+  mode: import.meta.env.MODE,
+  allEnvVars: import.meta.env // Log all available env vars
+});
+
 // Create mock client if in development with missing vars
 const createMockClient = () => ({
   auth: {
@@ -33,16 +41,37 @@ const createMockClient = () => ({
 
 let supabase;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase configuration:', {
-    url: supabaseUrl,
-    key: supabaseAnonKey,
+// Validate URL format
+const isValidUrl = (url) => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+if (!supabaseUrl || !supabaseAnonKey || !isValidUrl(supabaseUrl)) {
+  console.error('Invalid Supabase configuration:', {
+    url: {
+      value: supabaseUrl || 'MISSING',
+      isValid: isValidUrl(supabaseUrl)
+    },
+    key: {
+      present: Boolean(supabaseAnonKey),
+      length: supabaseAnonKey?.length
+    },
     mode: import.meta.env.MODE
   });
   supabase = createMockClient();
 } else {
-  // Create the real Supabase client with the provided configuration
-  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  try {
+    supabase = createClient(supabaseUrl, supabaseAnonKey);
+    console.log('Supabase client created successfully');
+  } catch (error) {
+    console.error('Error creating Supabase client:', error);
+    supabase = createMockClient();
+  }
 }
 
 export { supabase }; 
