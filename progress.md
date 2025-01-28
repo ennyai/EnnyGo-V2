@@ -545,3 +545,8 @@ yarn test
 - Environment variables must be set directly in Railway without using variable references
 - The build process now handles environment variables more reliably
 - Added better error handling and user feedback for configuration issues
+
+## [2025-01-29] - Environment Variable Hotfix
+- Direct update to main branch for production environment variable handling
+- Modified Supabase configuration to support both Vite and direct env vars
+- Updated generate-env.js for production compatibility
