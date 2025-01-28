@@ -11,8 +11,6 @@ const Login = React.lazy(() => import('./pages/Login'));
 const SignUp = React.lazy(() => import('./pages/SignUp'));
 const AuthCallback = React.lazy(() => import('./pages/AuthCallback'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-const Events = React.lazy(() => import('./pages/Events'));
-const Blog = React.lazy(() => import('./pages/Blog'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 
@@ -87,10 +85,6 @@ function App() {
               </PublicRoute>
             } />
             <Route path="/auth/callback" element={<AuthCallback />} />
-            
-            {/* Public features */}
-            <Route path="/events" element={<Events />} />
-            <Route path="/blog" element={<Blog />} />
           </Route>
 
           {/* Protected dashboard routes */}
