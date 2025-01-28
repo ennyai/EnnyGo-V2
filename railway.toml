@@ -1,6 +1,7 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
+buildCommand = "yarn build"
 
 [deploy]
 startCommand = "yarn start"
@@ -9,6 +10,11 @@ healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 port = 3001
+
+# Expose these environment variables during build
+[build.env]
+VITE_SUPABASE_URL = { fromVariable = "VITE_SUPABASE_URL" }
+VITE_SUPABASE_ANON_KEY = { fromVariable = "VITE_SUPABASE_ANON_KEY" }
 
 [nixpacks]
 node_version = "18.x"
