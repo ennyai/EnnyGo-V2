@@ -13,6 +13,14 @@ RUN yarn install
 # Copy the rest of the application
 COPY . .
 
+# Build arguments for Supabase configuration
+ARG SUPABASE_URL
+ARG SUPABASE_ANON_KEY
+
+# Set environment variables for the build
+ENV SUPABASE_URL=$SUPABASE_URL
+ENV SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+
 # Build the frontend
 RUN yarn build
 

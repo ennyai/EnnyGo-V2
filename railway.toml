@@ -1,6 +1,7 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
+buildArgs = ["SUPABASE_URL", "SUPABASE_ANON_KEY"]
 
 [deploy]
 startCommand = "yarn start"
