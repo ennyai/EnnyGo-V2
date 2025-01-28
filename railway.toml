@@ -15,5 +15,10 @@ port = 3001
 VITE_SUPABASE_URL = { fromVariable = "VITE_SUPABASE_URL" }
 VITE_SUPABASE_ANON_KEY = { fromVariable = "VITE_SUPABASE_ANON_KEY" }
 
+# Environment variables for runtime
+[deploy.env]
+VITE_SUPABASE_URL = { fromVariable = "VITE_SUPABASE_URL" }
+VITE_SUPABASE_ANON_KEY = { fromVariable = "VITE_SUPABASE_ANON_KEY" }
+
 [nixpacks]
 node_version = "18.x" 

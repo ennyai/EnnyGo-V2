@@ -1,18 +1,8 @@
 # Use Node.js LTS version
-FROM node:20-slim
+FROM node:20-slim as builder
 
 # Set working directory
 WORKDIR /app
-
-# Set build-time arguments for Vite environment variables
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_ANON_KEY
-
-# Set environment variables
-ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
-    VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY \
-    NODE_ENV=production \
-    PORT=3001
 
 # Copy package files
 COPY package.json yarn.lock ./
@@ -23,16 +13,37 @@ RUN yarn install
 # Copy the rest of the application
 COPY . .
 
-# Print environment variables for debugging (will be removed in production)
-RUN echo "VITE_SUPABASE_URL: $VITE_SUPABASE_URL" && \
-    echo "Building with environment variables..."
+# Build arguments for Vite
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
 
-# Build the frontend
-RUN VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
-    VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY \
+# Build the frontend with environment variables
+RUN VITE_SUPABASE_URL=${VITE_SUPABASE_URL} \
+    VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY} \
     yarn build
 
-# Expose the port the app runs on
+# Production stage
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json yarn.lock ./
+
+# Install production dependencies only
+RUN yarn install --production
+
+# Copy built assets from builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/src/server ./src/server
+
+# Set production environment variables
+ENV NODE_ENV=production
+ENV PORT=3001
+ENV VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+ENV VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+
+# Expose the port
 EXPOSE $PORT
 
 # Start the server
