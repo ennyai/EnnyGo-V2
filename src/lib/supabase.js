@@ -4,18 +4,21 @@ import { createClient } from '@supabase/supabase-js';
 const getSupabaseConfig = () => {
   // Try different ways to get the config
   const config = {
-    // Try both the Vite way and our defined variables
-    url: import.meta.env.VITE_SUPABASE_URL || window.__VITE_SUPABASE_URL__,
-    key: import.meta.env.VITE_SUPABASE_ANON_KEY || window.__VITE_SUPABASE_ANON_KEY__,
+    url: import.meta.env.VITE_SUPABASE_URL,
+    key: import.meta.env.VITE_SUPABASE_ANON_KEY,
   };
 
   // Log the current environment and configuration status
   console.log('Environment:', import.meta.env.MODE);
+  console.log('Environment Variables:', {
+    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+    VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY ? '[PRESENT]' : '[MISSING]'
+  });
   console.log('Supabase Config Status:', {
     hasUrl: Boolean(config.url),
     hasKey: Boolean(config.key),
-    url: config.url ? 'present' : 'missing',
-    key: config.key ? 'present' : 'missing'
+    url: config.url ? '[PRESENT]' : '[MISSING]',
+    key: config.key ? '[PRESENT]' : '[MISSING]'
   });
 
   return config;
@@ -56,8 +59,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error(
     'Missing Supabase environment variables:',
     {
-      url: supabaseUrl ? 'present' : 'missing',
-      key: supabaseAnonKey ? 'present' : 'missing'
+      url: supabaseUrl ? '[PRESENT]' : '[MISSING]',
+      key: supabaseAnonKey ? '[PRESENT]' : '[MISSING]',
+      mode: import.meta.env.MODE,
+      meta: import.meta.env
     }
   );
   supabase = createMockClient();
