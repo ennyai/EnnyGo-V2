@@ -2,6 +2,7 @@
   "name": "ennygo-v2",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
     "start": "node src/server/index.js",
     "build": "vite build",
@@ -9,7 +10,7 @@
     "dev:client": "vite --port 3000",
     "dev:server": "nodemon src/server/index.js",
     "dev:all": "yarn predev:server && concurrently \"yarn dev:client\" \"yarn dev:server\"",
-    "predev:server": "lsof -ti:3001 | xargs kill -9 2>/dev/null || true",
+    "predev:server": "lsof -ti:3000,3001 | xargs kill -9 2>/dev/null || true",
     "webhook:init": "node src/server/scripts/initWebhook.js",
     "webhook:reset": "node src/server/scripts/reset-webhook.js",
     "cleanup": "node src/server/scripts/cleanup.js",
@@ -33,7 +34,7 @@
     "axios": "^1.6.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.0",
-    "concurrently": "^8.2.2",
+    "concurrently": "^9.1.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.1",
     "express": "^4.18.2",
@@ -70,6 +71,7 @@
     "postcss": "^8.5.1",
     "tailwindcss": "^3.4.17",
     "vite": "^6.0.10",
-    "vitest": "^0.32.0"
+    "vitest": "^0.32.0",
+    "yargs": "^17.7.2"
   }
 }

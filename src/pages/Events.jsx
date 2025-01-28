@@ -13,7 +13,8 @@ import { selectIsAuthenticated } from '../store/slices/authSlice';
 import { toggleModal } from '../store/slices/uiSlice';
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Calendar, Users, PlusCircle, Loader2 } from "lucide-react";
+import { Calendar, Users, PlusCircle, Loader2, Trophy, ArrowRight } from "lucide-react";
+import { events as eventData } from '../data/events';
 
 const Events = ({ disableFetch = false }) => {
   const dispatch = useDispatch();
@@ -25,41 +26,20 @@ const Events = ({ disableFetch = false }) => {
   useEffect(() => {
     if (disableFetch) return;
 
-    // Simulating API call - replace with actual API call later
     const fetchEvents = async () => {
       try {
         dispatch(setLoading(true));
-        // Temporary mock data
-        const mockEvents = [
-          {
-            id: 1,
-            title: "Summer Ultra Challenge",
-            date: "August 1-31, 2024",
-            description: "A month-long virtual ultra-endurance challenge covering 500km",
-            participants: 234,
-            difficulty: "Challenging",
-            image: "https://images.unsplash.com/photo-1452626038306-9aae5e071dd3"
-          },
-          {
-            id: 2,
-            title: "Weekend Warriors",
-            date: "Every Weekend",
-            description: "Join fellow athletes for weekend virtual races and challenges",
-            participants: 156,
-            difficulty: "Moderate",
-            image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211"
-          }
-        ];
-        dispatch(setEvents(mockEvents));
+        // Using our events data source
+        dispatch(setEvents(eventData));
       } catch (err) {
-        dispatch(setError('Failed to fetch events. Please try again later.'));
+        dispatch(setError('Failed to load events. Please try again later.'));
       } finally {
         dispatch(setLoading(false));
       }
     };
 
     fetchEvents();
-  }, [dispatch]);
+  }, [dispatch, disableFetch]);
 
   const handleJoinEvent = (eventId) => {
     if (!isAuthenticated) {
@@ -110,7 +90,9 @@ const Events = ({ disableFetch = false }) => {
   return (
     <div className="container mx-auto px-4 py-8">
       <section className="text-center mb-16">
-        <h1 className="text-4xl font-bold mb-4">Virtual Events</h1>
+        <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-[#FC4C02] to-[#FC4C02]/60 bg-clip-text text-transparent">
+          Virtual Events
+        </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Join exciting virtual challenges and compete with athletes worldwide
         </p>
@@ -118,7 +100,7 @@ const Events = ({ disableFetch = false }) => {
 
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
         {events.map(event => (
-          <Card key={event.id} className="overflow-hidden flex flex-col">
+          <Card key={event.id} className="overflow-hidden flex flex-col border-2 hover:border-[#FC4C02]/50 transition-colors">
             <div 
               className="h-48 w-full bg-cover bg-center"
               style={{ backgroundImage: `url(${event.image})` }}
@@ -127,7 +109,7 @@ const Events = ({ disableFetch = false }) => {
               <CardTitle>{event.title}</CardTitle>
               <CardDescription className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                {event.date}
+                {event.startDate} to {event.endDate}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -135,17 +117,18 @@ const Events = ({ disableFetch = false }) => {
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users className="h-4 w-4" />
                 <span>{event.participants} participants</span>
-                <span className="px-2 py-1 rounded-full bg-primary/10 text-primary text-xs ml-auto">
-                  {event.difficulty}
-                </span>
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-[#FC4C02]/10 text-[#FC4C02] text-xs ml-auto">
+                  <Trophy className="h-3 w-3" />
+                  {event.goal ? `${event.goal}${event.unit}` : 'No limit'}
+                </div>
               </div>
             </CardContent>
             <CardFooter className="mt-auto pt-6">
               <Button 
-                className="w-full"
+                className="w-full bg-[#FC4C02] hover:bg-[#FC4C02]/90 group"
                 onClick={() => handleJoinEvent(event.id)}
               >
-                Join Event
+                Join Challenge <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </CardFooter>
           </Card>
@@ -153,22 +136,22 @@ const Events = ({ disableFetch = false }) => {
       </section>
 
       <section className="mb-16">
-        <Card className="bg-primary text-primary-foreground">
+        <Card className="bg-[#FC4C02] text-white">
           <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
-              <h2 className="text-2xl font-bold mb-2">Create Your Own Event</h2>
-              <p className="text-primary-foreground/90">
-                Organize virtual challenges for your community
+              <h2 className="text-2xl font-bold mb-2">Create Your Own Challenge</h2>
+              <p className="text-white/90">
+                Organize virtual events for your community
               </p>
             </div>
             <Button 
               variant="secondary"
               size="lg"
               onClick={handleCreateEvent}
-              className="gap-2"
+              className="gap-2 bg-white text-[#FC4C02] hover:bg-white/90"
             >
               <PlusCircle className="h-5 w-5" />
-              Create Event
+              Create Challenge
             </Button>
           </CardContent>
         </Card>

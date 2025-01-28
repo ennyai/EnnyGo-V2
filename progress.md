@@ -406,3 +406,35 @@ yarn test
 - Check ERROR_SOLUTIONS.md for troubleshooting common issues
 - Keep environment variables updated in .env file
 - Use ngrok for testing webhooks locally
+
+## Recent Updates
+
+### Strava Integration and Settings Improvements
+1. Separated Strava Connection from Activity Settings
+   - Decoupled Strava authentication from activity watching preferences
+   - Improved error handling for both processes
+   - Ensured Strava connection works independently of settings
+
+2. Activity Watching Settings
+   - Implemented default-off state for new connections
+   - Fixed UI switch to properly reflect settings state
+   - Added proper state management between database and Redux
+   - Improved user feedback with appropriate toast messages
+
+3. Code Structure Improvements
+   - Separated concerns in handleStravaCallback
+   - Added better error handling for settings operations
+   - Improved state synchronization between Supabase and Redux
+   - Added proper initialization of user settings
+
+### Known Issues and Next Steps
+1. Continue monitoring Strava webhook functionality
+2. Consider adding user preferences persistence
+3. Add more comprehensive error logging
+4. Consider adding activity title preview feature
+
+### Technical Details
+- Updated Redux store to handle settings state properly
+- Improved database schema for user_settings
+- Enhanced error handling in Strava connection flow
+- Added proper state reset on disconnect

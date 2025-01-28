@@ -1,6 +1,6 @@
-const axios = require('axios');
+import axios from 'axios';
 
-async function setupStravaWebhook() {
+export async function setupStravaWebhook() {
   try {
     const response = await axios.post('https://www.strava.com/api/v3/push_subscriptions', {
       client_id: process.env.VITE_STRAVA_CLIENT_ID,
@@ -22,7 +22,7 @@ async function setupStravaWebhook() {
 }
 
 // Function to view existing subscriptions
-async function listSubscriptions() {
+export async function listSubscriptions() {
   try {
     const response = await axios.get('https://www.strava.com/api/v3/push_subscriptions', {
       params: {
@@ -40,24 +40,18 @@ async function listSubscriptions() {
 }
 
 // Function to delete a subscription
-async function deleteSubscription(subscriptionId) {
+export async function deleteSubscription(id) {
   try {
-    await axios.delete(`https://www.strava.com/api/v3/push_subscriptions/${subscriptionId}`, {
+    await axios.delete(`https://www.strava.com/api/v3/push_subscriptions/${id}`, {
       params: {
         client_id: process.env.VITE_STRAVA_CLIENT_ID,
         client_secret: process.env.VITE_STRAVA_CLIENT_SECRET,
       }
     });
 
-    console.log(`Successfully deleted subscription ${subscriptionId}`);
+    console.log(`Successfully deleted subscription ${id}`);
   } catch (error) {
     console.error('Error deleting webhook subscription:', error.response?.data || error.message);
     throw error;
   }
-}
-
-module.exports = {
-  setupStravaWebhook,
-  listSubscriptions,
-  deleteSubscription,
-}; 
+} 

@@ -5,8 +5,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { cn } from '../../lib/utils';
 import {
   LayoutDashboard,
-  Calendar,
-  BookOpen,
   Settings,
   LogOut,
   Menu,
@@ -21,7 +19,7 @@ import {
   SheetTrigger,
 } from '../ui/sheet';
 import { supabase } from '@/lib/supabase';
-import { storage } from '@/utils/storage';
+import { clientStorage } from '@/utils/storage';
 import { disconnect } from '@/store/slices/stravaSlice';
 
 const NavigationItems = ({ className }) => {
@@ -36,16 +34,6 @@ const NavigationItems = ({ className }) => {
       icon: LayoutDashboard,
       label: 'Dashboard',
       href: '/dashboard'
-    },
-    {
-      icon: Calendar,
-      label: 'Events',
-      href: '/events'
-    },
-    {
-      icon: BookOpen,
-      label: 'Blog',
-      href: '/blog'
     },
     {
       icon: User,
@@ -91,7 +79,7 @@ export default function Sidebar() {
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
-      storage.clearStravaData();
+      clientStorage.clearStravaData();
       dispatch(disconnect());
       navigate('/');
       toast({

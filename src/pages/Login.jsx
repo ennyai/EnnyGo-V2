@@ -6,10 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
+import { useDispatch } from 'react-redux';
+import { setWatchActivities } from '@/store/slices/settingsSlice';
+import { clientStorage } from '@/utils/storage';
 
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const dispatch = useDispatch();
   const [loading, setLoading] = React.useState(false);
 
   const handleSubmit = async (e) => {
@@ -27,6 +31,40 @@ export default function Login() {
       });
 
       if (error) throw error;
+
+      // Clear any existing settings from local storage
+      clientStorage.clearSettings();
+      
+      // After successful login, ensure settings are initialized
+      const { data: settings, error: settingsError } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', data.user.id)
+        .single();
+
+      if (settingsError && settingsError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        console.error('Error fetching settings:', settingsError);
+      }
+
+      if (!settings) {
+        // Create default settings if they don't exist
+        const { error: createError } = await supabase
+          .from('user_settings')
+          .upsert({
+            user_id: data.user.id,
+            watch_activities: false
+          });
+
+        if (createError) {
+          console.error('Error creating settings:', createError);
+        }
+      }
+
+      // Always ensure Redux state is set to false on login
+      dispatch(setWatchActivities(false));
+      
+      // Explicitly set settings in local storage
+      clientStorage.setSettings({ watchActivities: false });
 
       toast({
         title: "Welcome back!",

@@ -1,7 +1,7 @@
-const { storage } = require('../server/utils/storage');
-const axios = require('axios');
+import { storage } from '../server/utils/storage.js';
+import axios from 'axios';
 
-const tokenManager = {
+export const tokenManager = {
   isTokenExpired: (expiresAt) => {
     // Check if token expires in the next 5 minutes
     return Date.now() >= (expiresAt * 1000) - (5 * 60 * 1000);
@@ -37,6 +37,4 @@ const tokenManager = {
       throw new Error('Failed to refresh token');
     }
   }
-};
-
-module.exports = { tokenManager }; 
+}; 

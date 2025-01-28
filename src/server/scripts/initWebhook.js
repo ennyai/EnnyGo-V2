@@ -1,5 +1,5 @@
-require('dotenv').config();
-const { setupStravaWebhook, listSubscriptions } = require('../utils/setupWebhook');
+import 'dotenv/config';
+import { setupStravaWebhook, listSubscriptions } from '../utils/setupWebhook.js';
 
 async function init() {
   try {

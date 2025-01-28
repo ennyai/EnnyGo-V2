@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { storage } from '../utils/storage';
+import { clientStorage } from '../utils/storage';
+import { getNextTitle, formatTitle } from '../utils/activity-titles';
 
 const STRAVA_CONFIG = {
   clientId: import.meta.env.VITE_STRAVA_CLIENT_ID,
@@ -36,6 +37,25 @@ class StravaService {
     }
   }
 
+  static async refreshToken(refreshToken) {
+    try {
+      console.log('Refreshing token...');
+      const params = new URLSearchParams({
+        client_id: STRAVA_CONFIG.clientId,
+        client_secret: STRAVA_CONFIG.clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+      });
+
+      const response = await axios.post(`${STRAVA_CONFIG.tokenUrl}?${params.toString()}`);
+      console.log('Token refresh successful');
+      return response.data;
+    } catch (error) {
+      console.error('Error refreshing token:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
   static async getAthleteData(accessToken) {
     try {
       const response = await axios.get('https://www.strava.com/api/v3/athlete', {
@@ -54,9 +74,27 @@ class StravaService {
 
   static async getActivities(params = {}) {
     try {
-      const tokens = storage.getStravaTokens();
+      const tokens = clientStorage.getStravaTokens();
       if (!tokens || !tokens.access_token) {
         throw new Error('No access token found');
+      }
+
+      // Check if token is expired or will expire in the next minute
+      const isTokenExpired = tokens.expires_at * 1000 <= Date.now() + 60000;
+      
+      let accessToken = tokens.access_token;
+      
+      if (isTokenExpired) {
+        console.log('Token is expired, refreshing before fetching activities...');
+        try {
+          const refreshedTokens = await this.refreshToken(tokens.refresh_token);
+          accessToken = refreshedTokens.access_token;
+          clientStorage.setStravaTokens(refreshedTokens);
+        } catch (refreshError) {
+          console.error('Error refreshing token:', refreshError);
+          clientStorage.clearStravaData();
+          throw new Error('Failed to refresh expired token');
+        }
       }
 
       const { page = 1, per_page = 30, before, after } = params;
@@ -70,7 +108,7 @@ class StravaService {
 
       const response = await axios.get(`https://www.strava.com/api/v3/athlete/activities?${queryParams}`, {
         headers: {
-          'Authorization': `Bearer ${tokens.access_token}`
+          'Authorization': `Bearer ${accessToken}`
         }
       });
 
@@ -82,19 +120,16 @@ class StravaService {
     }
   }
 
-  static async refreshToken(refreshToken) {
+  static async getActivity(activityId, accessToken) {
     try {
-      const params = new URLSearchParams({
-        client_id: STRAVA_CONFIG.clientId,
-        client_secret: STRAVA_CONFIG.clientSecret,
-        refresh_token: refreshToken,
-        grant_type: 'refresh_token',
+      const response = await axios.get(`https://www.strava.com/api/v3/activities/${activityId}`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
       });
-
-      const response = await axios.post(`${STRAVA_CONFIG.tokenUrl}?${params.toString()}`);
       return response.data;
     } catch (error) {
-      console.error('Error refreshing token:', error.response?.data || error.message);
+      console.error('Error fetching activity:', error);
       throw error;
     }
   }
@@ -118,19 +153,8 @@ class StravaService {
   }
 
   static generateCreativeTitle(activity) {
-    const type = activity.type.toLowerCase();
-    const distance = (activity.distance / 1000).toFixed(1);
-    const time = Math.floor(activity.moving_time / 60);
-    
-    const titles = [
-      `Epic ${type} Adventure: ${distance}km of Pure Joy!`,
-      `${distance}km ${type} Journey - ${time} Minutes of Freedom`,
-      `Conquering ${distance}km on a ${type} Quest`,
-      `${type} Exploration: ${distance}km of Discovery`,
-      `${time}-Minute ${type} Escape: ${distance}km of Bliss`
-    ];
-    
-    return titles[Math.floor(Math.random() * titles.length)];
+    const titleTemplate = getNextTitle();
+    return formatTitle(titleTemplate, activity);
   }
 }
 

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import StravaService from '@/services/strava';
-import { storage } from '@/utils/storage';
+import { clientStorage } from '@/utils/storage';
 import {
   startConnecting,
   connectionSuccess,
@@ -17,6 +17,8 @@ import { Trophy, MapPin, Timer, Activity } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from '@/lib/supabase';
 import { useUser } from '@/hooks/useUser';
+import { Switch } from '@/components/ui/switch';
+import { toggleWatchActivities, setWatchActivities } from '@/store/slices/settingsSlice';
 
 function formatDuration(seconds) {
   const hours = Math.floor(seconds / 3600);
@@ -93,6 +95,7 @@ export default function Dashboard() {
   const processedCode = useRef(null);
   const { activities, isLoading, error, hasMore, fetchActivities, loadMore } = useActivities();
   const { user, loading } = useUser();
+  const { watchActivities } = useSelector((state) => state.settings);
 
   // Add state for visible activities count
   const [visibleCount, setVisibleCount] = React.useState(5);
@@ -178,35 +181,116 @@ export default function Dashboard() {
           .from('strava_tokens')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (tokenError) {
           console.error('Error fetching tokens:', tokenError);
           return;
         }
 
-        if (tokens) {
-          // Get athlete data from Strava
-          const athleteData = await StravaService.getAthleteData(tokens.access_token);
-          
-          // Save to localStorage for frontend use
-          storage.setStravaTokens({
-            access_token: tokens.access_token,
-            refresh_token: tokens.refresh_token,
-            expires_at: tokens.expires_at
-          });
-          storage.setStravaAthlete(athleteData);
-          
-          // Update Redux state
-          dispatch(connectionSuccess({ 
-            access_token: tokens.access_token,
-            refresh_token: tokens.refresh_token,
-            expires_at: tokens.expires_at,
-            athlete: athleteData 
-          }));
+        if (!tokens) {
+          console.log('No Strava tokens found for user');
+          // Ensure settings are reset when no Strava connection exists
+          dispatch(setWatchActivities(false));
+          return;
+        }
+
+        // Load user settings
+        const { data: settings, error: settingsError } = await supabase
+          .from('user_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (settingsError) {
+          console.error('Error fetching settings:', settingsError);
+          // If there's an error fetching settings, default to false
+          dispatch(setWatchActivities(false));
+        } else if (settings) {
+          // Update Redux state with the current settings
+          dispatch(setWatchActivities(settings.watch_activities));
+        } else {
+          // If no settings exist, create them with watch_activities set to false
+          const { error: createError } = await supabase
+            .from('user_settings')
+            .insert({
+              user_id: user.id,
+              watch_activities: false
+            });
+
+          if (createError) {
+            console.error('Error creating settings:', createError);
+          }
+          dispatch(setWatchActivities(false));
+        }
+
+        // Check if token is expired or will expire in the next minute
+        const isTokenExpired = tokens.expires_at * 1000 <= Date.now() + 60000;
+        
+        if (isTokenExpired) {
+          console.log('Token is expired, attempting to refresh...');
+          try {
+            const refreshedTokens = await StravaService.refreshToken(tokens.refresh_token);
+            const athleteData = await StravaService.getAthleteData(refreshedTokens.access_token);
+
+            // Update tokens in Supabase
+            await supabase
+              .from('strava_tokens')
+              .update({
+                access_token: refreshedTokens.access_token,
+                refresh_token: refreshedTokens.refresh_token,
+                expires_at: refreshedTokens.expires_at
+              })
+              .eq('user_id', user.id);
+
+            // Save to localStorage
+            clientStorage.setStravaTokens(refreshedTokens);
+            clientStorage.setStravaAthlete(athleteData);
+
+            // Update Redux state
+            dispatch(connectionSuccess({
+              ...refreshedTokens,
+              athlete: athleteData
+            }));
+          } catch (refreshError) {
+            console.error('Error refreshing token:', refreshError);
+            // Clear invalid tokens
+            await supabase
+              .from('strava_tokens')
+              .delete()
+              .eq('user_id', user.id);
+            clientStorage.clearStravaData();
+            dispatch(setWatchActivities(false));
+            return;
+          }
+        } else {
+          try {
+            // Token is still valid, get athlete data
+            const athleteData = await StravaService.getAthleteData(tokens.access_token);
+            
+            // Save to localStorage for frontend use
+            clientStorage.setStravaTokens(tokens);
+            clientStorage.setStravaAthlete(athleteData);
+            
+            // Update Redux state
+            dispatch(connectionSuccess({
+              ...tokens,
+              athlete: athleteData
+            }));
+          } catch (error) {
+            console.error('Error getting athlete data:', error);
+            // Clear invalid tokens
+            await supabase
+              .from('strava_tokens')
+              .delete()
+              .eq('user_id', user.id);
+            clientStorage.clearStravaData();
+            dispatch(setWatchActivities(false));
+          }
         }
       } catch (error) {
-        console.error('Error restoring Strava connection:', error);
+        console.error('Error in checkStravaConnection:', error);
+        dispatch(setWatchActivities(false));
       }
     };
 
@@ -255,8 +339,9 @@ export default function Dashboard() {
       }
 
       dispatch(startConnecting());
-      console.log('Starting token exchange with code:', code);
       
+      // First handle Strava connection
+      console.log('Starting token exchange with code:', code);
       const tokenData = await StravaService.exchangeToken(code);
       console.log('Received token data:', tokenData);
       
@@ -264,12 +349,7 @@ export default function Dashboard() {
       console.log('Received athlete data:', athleteData);
       
       // Save tokens to Supabase
-      console.log('Saving tokens to Supabase...', {
-        user_id: user.id,
-        strava_athlete_id: athleteData.id.toString()
-      });
-
-      const { data: tokenResult, error: tokenError } = await supabase
+      const { error: tokenError } = await supabase
         .from('strava_tokens')
         .upsert({
           user_id: user.id,
@@ -277,36 +357,33 @@ export default function Dashboard() {
           refresh_token: tokenData.refresh_token,
           expires_at: tokenData.expires_at,
           strava_athlete_id: athleteData.id.toString()
-        })
-        .select();
+        });
 
       if (tokenError) {
         console.error('Error saving tokens:', tokenError);
         throw new Error('Failed to save Strava tokens');
       }
-
-      console.log('Successfully saved tokens:', tokenResult);
-
-      // Save user settings with activity watching enabled by default
-      console.log('Saving user settings...');
-      const { data: settingsResult, error: settingsError } = await supabase
+      
+      // Save to localStorage for frontend use
+      clientStorage.setStravaTokens(tokenData);
+      clientStorage.setStravaAthlete(athleteData);
+      
+      // Always create or update settings with watch_activities set to false
+      console.log('Setting watch_activities to false...');
+      const { error: settingsError } = await supabase
         .from('user_settings')
         .upsert({
           user_id: user.id,
-          watch_activities: true
-        })
-        .select();
+          watch_activities: false
+        });
 
       if (settingsError) {
-        console.error('Error saving settings:', settingsError);
-        throw new Error('Failed to save user settings');
+        console.error('Error updating settings:', settingsError);
+        // Don't throw here, as Strava connection is already successful
       }
-
-      console.log('Successfully saved settings:', settingsResult);
       
-      // Save to localStorage for frontend use
-      storage.setStravaTokens(tokenData);
-      storage.setStravaAthlete(athleteData);
+      // Initialize Redux state
+      dispatch(setWatchActivities(false));
       
       console.log('Dispatching connection success...');
       dispatch(connectionSuccess({ ...tokenData, athlete: athleteData }));
@@ -331,12 +408,44 @@ export default function Dashboard() {
     window.location.href = StravaService.getAuthUrl();
   };
 
-  const handleStravaDisconnect = () => {
-    storage.clearStravaData();
-    dispatch(disconnect());
+  const handleStravaDisconnect = async () => {
+    try {
+      // Remove tokens from Supabase
+      const { error } = await supabase
+        .from('strava_tokens')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error removing Strava tokens:', error);
+        throw new Error('Failed to remove Strava tokens');
+      }
+
+      // Clear local storage and Redux state
+      clientStorage.clearStravaData();
+      dispatch(disconnect());
+      
+      toast({
+        title: "Disconnected from Strava",
+        description: "Your Strava connection has been removed.",
+      });
+    } catch (error) {
+      console.error('Error disconnecting from Strava:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to disconnect from Strava. Please try again.",
+      });
+    }
+  };
+
+  const handleWatchActivitiesToggle = () => {
+    dispatch(toggleWatchActivities());
     toast({
-      title: "Disconnected from Strava",
-      description: "Your Strava connection has been removed.",
+      title: watchActivities ? "Activity Watching Disabled" : "Activity Watching Enabled",
+      description: watchActivities 
+        ? "We'll no longer automatically update your activity titles." 
+        : "We'll now automatically generate creative titles for your new activities!",
     });
   };
 
@@ -372,6 +481,47 @@ export default function Dashboard() {
         <div className="flex items-center justify-between space-y-2">
           <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         </div>
+        
+        {/* Webhook Settings Card - Only show after Strava connection */}
+        {isConnected && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Automatic Activity Updates</CardTitle>
+              <CardDescription>
+                Enable EnnyGo to automatically enhance your new Strava activities with creative titles
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <div className="text-base font-medium">Enable Activity Updates</div>
+                  <div className="text-sm text-muted-foreground">
+                    When enabled, EnnyGo will automatically generate creative titles for your new activities as soon as they are uploaded to Strava
+                  </div>
+                </div>
+                <Switch
+                  checked={watchActivities}
+                  onCheckedChange={handleWatchActivitiesToggle}
+                />
+              </div>
+              {!watchActivities ? (
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="text-sm text-muted-foreground">
+                    🚀 Turn on automatic updates to have EnnyGo instantly generate creative titles for your new Strava activities. 
+                    Each time you complete an activity, we'll create an engaging title that captures your achievement!
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-lg bg-primary/10 p-4">
+                  <p className="text-sm">
+                    ✨ Automatic updates are enabled! Your next Strava activity will automatically receive a creative title. 
+                    You can always adjust this in your settings later.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
         
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

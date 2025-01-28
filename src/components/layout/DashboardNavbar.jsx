@@ -4,9 +4,10 @@ import { Button } from '../ui/button';
 import { LogOut } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { disconnect } from '../../store/slices/stravaSlice';
-import { storage } from '../../utils/storage';
+import { clientStorage } from '@/utils/storage';
 import { useToast } from '../ui/use-toast';
 import { supabase } from '@/lib/supabase';
+import { useUser } from '@/hooks/useUser';
 import {
   Tooltip,
   TooltipContent,
@@ -22,21 +23,54 @@ export default function DashboardNavbar() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isConnected } = useSelector((state) => state.strava);
+  const { user } = useUser();
 
-  const handleStravaDisconnect = () => {
-    storage.clearStravaData();
-    dispatch(disconnect());
-    toast({
-      title: "Disconnected from Strava",
-      description: "Your Strava connection has been removed.",
-      variant: "default",
-    });
+  const handleStravaDisconnect = async () => {
+    if (!user) {
+      console.error('No user found');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Unable to disconnect. Please try signing out and back in.",
+      });
+      return;
+    }
+
+    try {
+      // Remove tokens from Supabase
+      const { error } = await supabase
+        .from('strava_tokens')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error removing Strava tokens:', error);
+        throw new Error('Failed to remove Strava tokens');
+      }
+
+      // Clear local storage and Redux state
+      clientStorage.clearStravaData();
+      dispatch(disconnect());
+      
+      toast({
+        title: "Disconnected from Strava",
+        description: "Your Strava connection has been removed.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('Error disconnecting from Strava:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to disconnect from Strava. Please try again.",
+      });
+    }
   };
 
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
-      storage.clearStravaData();
+      clientStorage.clearStravaData();
       dispatch(disconnect());
       navigate('/');
       toast({

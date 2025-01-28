@@ -1,10 +1,11 @@
+// Client-side storage implementation using localStorage
 const STORAGE_KEYS = {
   STRAVA_TOKENS: 'strava_tokens',
   STRAVA_ATHLETE: 'strava_athlete',
   SETTINGS: 'enny_settings'
 };
 
-export const storage = {
+export const clientStorage = {
   setStravaTokens: (tokens) => {
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem(STORAGE_KEYS.STRAVA_TOKENS, JSON.stringify(tokens));

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { toggleWatchActivities } from '../store/slices/settingsSlice';
+import { toggleWatchActivities, setWatchActivities, resetSettings } from '../store/slices/settingsSlice';
 import {
   Card,
   CardContent,
@@ -19,8 +19,15 @@ export default function Settings() {
   const { watchActivities } = useSelector((state) => state.settings);
   const { isConnected } = useSelector((state) => state.strava);
 
+  // Reset settings when component mounts or when Strava connection changes
+  useEffect(() => {
+    if (!isConnected) {
+      dispatch(resetSettings());
+    }
+  }, [isConnected, dispatch]);
+
   const handleWatchActivitiesToggle = () => {
-    if (!isConnected && !watchActivities) {
+    if (!isConnected) {
       toast({
         title: "Strava Connection Required",
         description: "Please connect your Strava account to enable activity watching.",
@@ -29,12 +36,14 @@ export default function Settings() {
       return;
     }
     
-    dispatch(toggleWatchActivities());
+    const newValue = !watchActivities;
+    dispatch(setWatchActivities(newValue));
+    
     toast({
-      title: watchActivities ? "Activity Watching Disabled" : "Activity Watching Enabled",
-      description: watchActivities 
-        ? "We'll no longer automatically update your activity titles." 
-        : "We'll now automatically generate creative titles for your new activities!",
+      title: newValue ? "Activity Watching Enabled" : "Activity Watching Disabled",
+      description: newValue 
+        ? "We'll now automatically generate creative titles for your new activities!"
+        : "We'll no longer automatically update your activity titles.",
     });
   };
 
@@ -56,7 +65,7 @@ export default function Settings() {
               </div>
             </div>
             <Switch
-              checked={watchActivities}
+              checked={isConnected && watchActivities}
               onCheckedChange={handleWatchActivitiesToggle}
               disabled={!isConnected}
             />

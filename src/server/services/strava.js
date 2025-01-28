@@ -1,64 +1,104 @@
-const axios = require('axios');
-const { tokenManager } = require('../../utils/token-manager');
+import axios from 'axios';
+import { getNextTitle } from '../../utils/activity-titles.js';
 
-const STRAVA_CONFIG = {
-  clientId: process.env.STRAVA_CLIENT_ID,
-  clientSecret: process.env.STRAVA_CLIENT_SECRET,
-  redirectUri: process.env.STRAVA_REDIRECT_URI,
-  authUrl: process.env.STRAVA_AUTH_URL,
-  tokenUrl: process.env.STRAVA_TOKEN_URL,
-};
+export class StravaService {
+  static async exchangeToken(code) {
+    try {
+      const response = await axios.post('https://www.strava.com/oauth/token', {
+        client_id: process.env.STRAVA_CLIENT_ID,
+        client_secret: process.env.STRAVA_CLIENT_SECRET,
+        code,
+        grant_type: 'authorization_code'
+      });
 
-class StravaService {
+      return response.data;
+    } catch (error) {
+      console.error('Token exchange error:', error.response?.data || error.message);
+      throw new Error('Failed to exchange token with Strava');
+    }
+  }
+
+  static async refreshToken(refreshToken) {
+    try {
+      const response = await axios.post('https://www.strava.com/oauth/token', {
+        client_id: process.env.STRAVA_CLIENT_ID,
+        client_secret: process.env.STRAVA_CLIENT_SECRET,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token'
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('Token refresh error:', error.response?.data || error.message);
+      throw new Error('Failed to refresh token with Strava');
+    }
+  }
+
   static async getActivity(activityId, accessToken) {
     try {
       const response = await axios.get(
         `https://www.strava.com/api/v3/activities/${activityId}`,
         {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
+          headers: { Authorization: `Bearer ${accessToken}` }
         }
       );
       return response.data;
     } catch (error) {
-      console.error('Error fetching activity:', error.response?.data || error.message);
-      throw error;
+      console.error('Get activity error:', error.response?.data || error.message);
+      throw new Error('Failed to fetch activity from Strava');
     }
   }
 
-  static async updateActivityTitle(activityId, newTitle, accessToken) {
+  static async updateActivityTitle(activityId, title, accessToken) {
     try {
       const response = await axios.put(
         `https://www.strava.com/api/v3/activities/${activityId}`,
-        { name: newTitle },
+        { name: title },
         {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
+          headers: { Authorization: `Bearer ${accessToken}` }
         }
       );
       return response.data;
     } catch (error) {
-      console.error('Error updating activity title:', error);
-      throw error;
+      console.error('Update activity error:', error.response?.data || error.message);
+      throw new Error('Failed to update activity title on Strava');
     }
   }
 
   static generateCreativeTitle(activity) {
-    const type = activity.type.toLowerCase();
-    const distance = (activity.distance / 1000).toFixed(1);
-    const time = Math.floor(activity.moving_time / 60);
-    
-    const titles = [
-      `Epic ${type} Adventure: ${distance}km of Pure Joy!`,
-      `${distance}km ${type} Journey - ${time} Minutes of Freedom`,
-      `Conquering ${distance}km on a ${type} Quest`,
-      `${type} Exploration: ${distance}km of Discovery`,
-      `${time}-Minute ${type} Escape: ${distance}km of Bliss`
-    ];
-    
-    return titles[Math.floor(Math.random() * titles.length)];
+    // Use our new title system
+    return getNextTitle();
+  }
+
+  static async getAthleteActivities(accessToken, page = 1) {
+    try {
+      const response = await axios.get(
+        'https://www.strava.com/api/v3/athlete/activities',
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: {
+            page,
+            per_page: 30
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Get activities error:', error.response?.data || error.message);
+      throw new Error('Failed to fetch athlete activities from Strava');
+    }
+  }
+
+  static async getAthlete(accessToken) {
+    try {
+      const response = await axios.get('https://www.strava.com/api/v3/athlete', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Get athlete error:', error.response?.data || error.message);
+      throw new Error('Failed to fetch athlete data from Strava');
+    }
   }
 
   static async createActivity(accessToken, activityData) {
@@ -89,6 +129,4 @@ class StravaService {
       throw error;
     }
   }
-}
-
-module.exports = StravaService; 
+} 

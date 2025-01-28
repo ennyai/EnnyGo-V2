@@ -18,12 +18,12 @@ const Navbar = ({ isAuthenticated }) => {
 
   const NavLinks = ({ className = "", onClick }) => (
     <div className={`flex gap-8 ${className}`}>
-      <Link to="/events" className="text-base font-medium transition-colors hover:text-primary hover:scale-105" onClick={onClick}>
+      {/* <Link to="/events" className="text-base font-medium transition-colors hover:text-primary hover:scale-105" onClick={onClick}>
         Events
       </Link>
       <Link to="/blog" className="text-base font-medium transition-colors hover:text-primary hover:scale-105" onClick={onClick}>
         Blog
-      </Link>
+      </Link> */}
       {isAuthenticated && (
         <Link to="/dashboard" className="text-base font-medium transition-colors hover:text-primary hover:scale-105" onClick={onClick}>
           Dashboard
