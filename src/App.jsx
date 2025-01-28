@@ -1,5 +1,13 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { 
+  BrowserRouter as Router, 
+  Routes, 
+  Route, 
+  Navigate,
+  createRoutesFromElements,
+  createBrowserRouter,
+  RouterProvider
+} from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { useUser } from '@/hooks/useUser';
 import MainLayout from './components/layout/MainLayout';
@@ -56,51 +64,62 @@ function PublicRoute({ children }) {
   return children;
 }
 
+// Create router with future flags
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <>
+      {/* Public routes with top navbar */}
+      <Route element={<MainLayout />}>
+        <Route path="/" element={
+          <PublicRoute>
+            <Home />
+          </PublicRoute>
+        } />
+        <Route path="/login" element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        } />
+        <Route path="/signup" element={
+          <PublicRoute>
+            <SignUp />
+          </PublicRoute>
+        } />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+      </Route>
+
+      {/* Protected dashboard routes */}
+      <Route element={
+        <ProtectedRoute>
+          <DashboardLayout />
+        </ProtectedRoute>
+      }>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<Settings />} />
+      </Route>
+    </>
+  ),
+  {
+    future: {
+      v7_startTransition: true,
+      v7_relativeSplatPath: true
+    }
+  }
+);
+
 function App() {
   return (
-    <Router>
-      <Suspense fallback={
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold mb-2">Loading...</h2>
-          </div>
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-2">Loading...</h2>
         </div>
-      }>
-        <Routes>
-          {/* Public routes with top navbar */}
-          <Route element={<MainLayout />}>
-            <Route path="/" element={
-              <PublicRoute>
-                <Home />
-              </PublicRoute>
-            } />
-            <Route path="/login" element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            } />
-            <Route path="/signup" element={
-              <PublicRoute>
-                <SignUp />
-              </PublicRoute>
-            } />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-          </Route>
-
-          {/* Protected dashboard routes */}
-          <Route element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/settings" element={<Settings />} />
-          </Route>
-        </Routes>
-      </Suspense>
+      </div>
+    }>
+      <RouterProvider router={router} />
       <Toaster />
-    </Router>
+    </Suspense>
   );
 }
 
