@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
-dotenv.config();
+// Load environment variables silently (won't fail if .env is missing)
+dotenv.config({ silent: true });
 
 import express from 'express';
 import cors from 'cors';
@@ -18,7 +19,7 @@ const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 const app = express();
 
 // Middleware
-app.use(morgan('dev'));
+app.use(morgan(nodeEnv === 'production' ? 'combined' : 'dev'));
 app.use(cors({
   origin: frontendUrl,
   credentials: true
@@ -35,7 +36,8 @@ app.use('/api/strava', stravaWebhookRouter);
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy',
-    environment: nodeEnv
+    environment: nodeEnv,
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -46,17 +48,23 @@ app.get('*', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Error:', err.message);
+  console.error('Stack:', err.stack);
   res.status(500).json({
     error: 'Something went wrong!',
-    message: nodeEnv === 'development' ? err.message : undefined
+    message: nodeEnv === 'development' ? err.message : 'Internal server error'
   });
 });
 
 // Start server
-app.listen(port, () => {
-  console.log(`Server running on port ${port} in ${nodeEnv} mode`);
-  console.log(`Frontend URL: ${frontendUrl}`);
-});
+try {
+  app.listen(port, () => {
+    console.log(`Server running on port ${port} in ${nodeEnv} mode`);
+    console.log(`Frontend URL: ${frontendUrl}`);
+  });
+} catch (error) {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+}
 
 export default app; 
