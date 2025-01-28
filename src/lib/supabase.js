@@ -1,20 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Get configuration from runtime config
-const getConfig = () => {
-  if (typeof window !== 'undefined' && window.ENV) {
-    return {
-      supabaseUrl: window.ENV.VITE_SUPABASE_URL,
-      supabaseAnonKey: window.ENV.VITE_SUPABASE_ANON_KEY
-    };
-  }
-  return {
-    supabaseUrl: '',
-    supabaseAnonKey: ''
+// Get Supabase configuration
+const getSupabaseConfig = () => {
+  // Try different ways to get the config
+  const config = {
+    // Try import.meta.env first (Vite's way)
+    url: import.meta.env?.VITE_SUPABASE_URL,
+    key: import.meta.env?.VITE_SUPABASE_ANON_KEY,
   };
+
+  // Log the current environment and configuration status
+  console.log('Environment:', import.meta.env.MODE);
+  console.log('Supabase Config Status:', {
+    hasUrl: Boolean(config.url),
+    hasKey: Boolean(config.key),
+  });
+
+  return config;
 };
 
-const { supabaseUrl, supabaseAnonKey } = getConfig();
+const { url: supabaseUrl, key: supabaseAnonKey } = getSupabaseConfig();
 
 // Create a mock client for when configuration is missing
 const createMockClient = () => ({
@@ -47,7 +52,11 @@ let supabase;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error(
-    'Missing Supabase configuration. Please check your environment variables.'
+    'Missing Supabase configuration:',
+    {
+      url: supabaseUrl ? 'present' : 'missing',
+      key: supabaseAnonKey ? 'present' : 'missing'
+    }
   );
   supabase = createMockClient();
 } else {
