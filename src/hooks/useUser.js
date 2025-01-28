@@ -10,9 +10,14 @@ export function useUser() {
     // Get initial session
     async function getInitialSession() {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        if (!supabase.auth) {
+          throw new Error('Supabase client is not properly initialized');
+        }
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
         setUser(session?.user ?? null);
       } catch (error) {
+        console.error('Error getting session:', error);
         setError(error.message);
       } finally {
         setLoading(false);
@@ -21,16 +26,34 @@ export function useUser() {
 
     getInitialSession();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    let subscription;
+    try {
+      if (!supabase.auth) {
+        throw new Error('Supabase client is not properly initialized');
+      }
+      // Listen for auth changes
+      const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user ?? null);
+        setLoading(false);
+      });
+      subscription = authListener.subscription;
+    } catch (error) {
+      console.error('Error setting up auth listener:', error);
+      setError(error.message);
       setLoading(false);
-    });
+    }
 
     return () => {
-      subscription.unsubscribe();
+      if (subscription?.unsubscribe) {
+        subscription.unsubscribe();
+      }
     };
   }, []);
 
-  return { user, loading, error };
+  return { 
+    user, 
+    loading, 
+    error,
+    isInitialized: Boolean(supabase.auth)
+  };
 } 
