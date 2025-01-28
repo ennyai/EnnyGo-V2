@@ -1,6 +1,12 @@
 // Generate environment variables for Vite
-const fs = require('fs');
-const path = require('path');
+import { writeFileSync } from 'fs';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// Get current file's directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Modified to use production variable names
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -13,6 +19,9 @@ VITE_SUPABASE_ANON_KEY=${process.env.SUPABASE_ANON_KEY}
 `.trim();
 
 // Write to .env file
-fs.writeFileSync(path.join(process.cwd(), '.env'), envContent);
+writeFileSync(join(process.cwd(), '.env'), envContent);
 
-console.log('Generated Vite environment variables'); 
+console.log('Generated Vite environment variables:', {
+  SUPABASE_URL: process.env.SUPABASE_URL ? '[PRESENT]' : '[MISSING]',
+  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ? '[PRESENT]' : '[MISSING]'
+}); 
