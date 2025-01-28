@@ -6,11 +6,18 @@ import { config } from '../config/env.js';
 
 const router = express.Router();
 
-// Initialize Supabase client with service role key for backend access
-const supabase = createClient(config.supabase.url, config.supabase.serviceRoleKey);
+// Initialize Supabase client lazily
+let supabaseClient = null;
 
-// Log successful initialization
-console.log('Supabase client initialized successfully');
+const getSupabaseClient = () => {
+  if (!supabaseClient) {
+    if (!config.supabase.url || !config.supabase.serviceRoleKey) {
+      throw new Error('Supabase configuration is missing. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.');
+    }
+    supabaseClient = createClient(config.supabase.url, config.supabase.serviceRoleKey);
+  }
+  return supabaseClient;
+};
 
 // Webhook verification endpoint
 router.get('/webhook', (req, res) => {
@@ -38,6 +45,8 @@ router.post('/webhook', async (req, res) => {
   }
 
   try {
+    const supabase = getSupabaseClient();
+
     // Get the user's Strava tokens
     const { data: tokens, error: tokenError } = await supabase
       .from('strava_tokens')
@@ -133,6 +142,8 @@ router.post('/webhook', async (req, res) => {
 // Create activity endpoint
 router.post('/activities', async (req, res) => {
   try {
+    const supabase = getSupabaseClient();
+
     const { data: tokens, error: tokenError } = await supabase
       .from('strava_tokens')
       .select('access_token, user_id')
@@ -158,7 +169,10 @@ router.post('/activities', async (req, res) => {
     res.json({ message: 'Activity created successfully', activity });
   } catch (error) {
     console.error('Error creating activity:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
