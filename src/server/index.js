@@ -1,12 +1,9 @@
-import dotenv from 'dotenv';
-// Load environment variables silently (won't fail if .env is missing)
-dotenv.config({ silent: true });
-
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 import stravaWebhookRouter from './routes/strava-webhook.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,6 +22,16 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
+// Inject environment variables into config.js
+const configPath = path.join(__dirname, '../../dist/config.js');
+if (fs.existsSync(configPath)) {
+  let configContent = fs.readFileSync(configPath, 'utf8');
+  configContent = configContent
+    .replace('%%VITE_SUPABASE_URL%%', process.env.VITE_SUPABASE_URL || '')
+    .replace('%%VITE_SUPABASE_ANON_KEY%%', process.env.VITE_SUPABASE_ANON_KEY || '');
+  fs.writeFileSync(configPath, configContent);
+}
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../../dist')));
