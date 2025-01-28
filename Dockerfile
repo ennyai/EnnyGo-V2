@@ -30,6 +30,7 @@ RUN yarn install --production
 # Copy built assets from builder stage
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src/server ./src/server
+COPY --from=builder /app/src/utils ./src/utils
 
 # Set runtime environment
 ENV NODE_ENV=production
