@@ -1,32 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Get Supabase configuration
-const getSupabaseConfig = () => {
-  // Try different ways to get the config
-  const config = {
-    url: import.meta.env.VITE_SUPABASE_URL,
-    key: import.meta.env.VITE_SUPABASE_ANON_KEY,
-  };
+// Get production build variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-  // Log the current environment and configuration status
-  console.log('Environment:', import.meta.env.MODE);
-  console.log('Environment Variables:', {
-    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
-    VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY ? '[PRESENT]' : '[MISSING]'
-  });
-  console.log('Supabase Config Status:', {
-    hasUrl: Boolean(config.url),
-    hasKey: Boolean(config.key),
-    url: config.url ? '[PRESENT]' : '[MISSING]',
-    key: config.key ? '[PRESENT]' : '[MISSING]'
-  });
-
-  return config;
-};
-
-const { url: supabaseUrl, key: supabaseAnonKey } = getSupabaseConfig();
-
-// Create a mock client for when configuration is missing
+// Create mock client if in development with missing vars
 const createMockClient = () => ({
   auth: {
     getSession: () => Promise.resolve({ data: { session: null }, error: null }),
@@ -56,15 +34,11 @@ const createMockClient = () => ({
 let supabase;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error(
-    'Missing Supabase environment variables:',
-    {
-      url: supabaseUrl ? '[PRESENT]' : '[MISSING]',
-      key: supabaseAnonKey ? '[PRESENT]' : '[MISSING]',
-      mode: import.meta.env.MODE,
-      meta: import.meta.env
-    }
-  );
+  console.error('Missing Supabase configuration:', {
+    url: supabaseUrl,
+    key: supabaseAnonKey,
+    mode: import.meta.env.MODE
+  });
   supabase = createMockClient();
 } else {
   // Create the real Supabase client with the provided configuration

@@ -8,11 +8,11 @@ const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
 // Create the env content
 const envContent = `
-VITE_SUPABASE_URL=${supabaseUrl}
-VITE_SUPABASE_ANON_KEY=${supabaseAnonKey}
+VITE_SUPABASE_URL=${process.env.SUPABASE_URL}
+VITE_SUPABASE_ANON_KEY=${process.env.SUPABASE_ANON_KEY}
 `.trim();
 
 // Write to .env file
 fs.writeFileSync(path.join(process.cwd(), '.env'), envContent);
 
-console.log('Environment variables generated for Vite build'); 
+console.log('Generated Vite environment variables'); 
