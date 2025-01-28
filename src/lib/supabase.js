@@ -8,6 +8,33 @@ const missingVars = [];
 if (!supabaseUrl) missingVars.push('VITE_SUPABASE_URL');
 if (!supabaseAnonKey) missingVars.push('VITE_SUPABASE_ANON_KEY');
 
+// Create a mock client for when configuration is missing
+const createMockClient = () => ({
+  auth: {
+    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+    signIn: () => Promise.reject(new Error('Authentication unavailable - Missing configuration')),
+    signOut: () => Promise.reject(new Error('Authentication unavailable - Missing configuration')),
+    onAuthStateChange: (callback) => {
+      // Immediately call callback with null session to indicate no auth
+      callback('SIGNED_OUT', null);
+      // Return a mock subscription that does nothing
+      return {
+        data: {
+          subscription: {
+            unsubscribe: () => {}
+          }
+        }
+      };
+    }
+  },
+  from: (table) => ({
+    select: () => Promise.reject(new Error(`Database unavailable - Cannot select from ${table}`)),
+    insert: () => Promise.reject(new Error(`Database unavailable - Cannot insert into ${table}`)),
+    update: () => Promise.reject(new Error(`Database unavailable - Cannot update ${table}`)),
+    delete: () => Promise.reject(new Error(`Database unavailable - Cannot delete from ${table}`))
+  })
+});
+
 let supabase;
 
 if (missingVars.length > 0) {
@@ -16,26 +43,15 @@ if (missingVars.length > 0) {
     missingVars.join(', '),
     '\nPlease add these to your Railway environment variables with the VITE_ prefix.'
   );
-  // In production, use a fallback client that will show appropriate UI messages
+  
+  // Use mock client in production, throw error in development
   if (import.meta.env.PROD) {
-    supabase = {
-      auth: {
-        signIn: () => Promise.reject(new Error('Authentication unavailable - Missing configuration')),
-        signOut: () => Promise.reject(new Error('Authentication unavailable - Missing configuration')),
-        onAuthStateChange: () => ({ data: null, error: new Error('Authentication unavailable') })
-      },
-      from: () => ({
-        select: () => Promise.reject(new Error('Database unavailable - Missing configuration')),
-        insert: () => Promise.reject(new Error('Database unavailable - Missing configuration')),
-        update: () => Promise.reject(new Error('Database unavailable - Missing configuration')),
-        delete: () => Promise.reject(new Error('Database unavailable - Missing configuration'))
-      })
-    };
+    supabase = createMockClient();
   } else {
     throw new Error(`Missing Supabase environment variables: ${missingVars.join(', ')}`);
   }
 } else {
-  // Create the Supabase client with the provided configuration
+  // Create the real Supabase client with the provided configuration
   supabase = createClient(supabaseUrl, supabaseAnonKey);
 }
 

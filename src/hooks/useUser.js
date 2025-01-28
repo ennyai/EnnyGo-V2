@@ -7,53 +7,50 @@ export function useUser() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let mounted = true;
+
     // Get initial session
     async function getInitialSession() {
       try {
-        if (!supabase.auth) {
-          throw new Error('Supabase client is not properly initialized');
-        }
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
-        setUser(session?.user ?? null);
+        if (mounted) {
+          setUser(session?.user ?? null);
+        }
       } catch (error) {
         console.error('Error getting session:', error);
-        setError(error.message);
+        if (mounted) {
+          setError(error.message);
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     }
 
     getInitialSession();
 
-    let subscription;
-    try {
-      if (!supabase.auth) {
-        throw new Error('Supabase client is not properly initialized');
-      }
-      // Listen for auth changes
-      const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) {
         setUser(session?.user ?? null);
         setLoading(false);
-      });
-      subscription = authListener.subscription;
-    } catch (error) {
-      console.error('Error setting up auth listener:', error);
-      setError(error.message);
-      setLoading(false);
-    }
-
-    return () => {
-      if (subscription?.unsubscribe) {
-        subscription.unsubscribe();
       }
+    });
+
+    // Cleanup function
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe();
     };
   }, []);
 
-  return { 
-    user, 
-    loading, 
+  return {
+    user,
+    loading,
     error,
-    isInitialized: Boolean(supabase.auth)
+    isAuthenticated: Boolean(user),
+    isConfigured: Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY)
   };
 } 
