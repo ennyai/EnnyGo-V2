@@ -11,7 +11,7 @@ const mockActivity = {
   total_elevation_gain: 100
 };
 
-const mockAxios = {
+export default {
   get: vi.fn((url, config) => {
     if (!config?.headers?.Authorization) {
       return Promise.reject({
@@ -57,12 +57,22 @@ const mockAxios = {
     });
   }),
   
-  create: vi.fn(function() { return this; }),
+  delete: vi.fn(),
+  
+  create: vi.fn(() => ({
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() }
+    }
+  })),
+  
   defaults: {
     headers: {
       common: {},
     },
   },
-};
-
-export default mockAxios; 
+}; 

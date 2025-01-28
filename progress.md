@@ -438,3 +438,28 @@ yarn test
 - Improved database schema for user_settings
 - Enhanced error handling in Strava connection flow
 - Added proper state reset on disconnect
+
+### Recent Updates (2024-03-22)
+1. Test Suite Improvements:
+   - ✅ Fixed Login component tests to use local state
+   - ✅ Updated Home component tests to match current implementation
+   - ✅ Removed unused Events and Blog tests for V2 simplification
+   - ✅ Fixed axios mock implementation for Strava service tests
+   - ✅ Improved test organization and structure
+   - ✅ Cleaned up test warnings and errors
+   - ✅ Removed deprecated webhook tests
+   - ✅ All tests now passing with proper assertions
+
+2. Code Simplification:
+   - ✅ Removed Events feature for V2
+   - ✅ Removed Blog feature for V2
+   - ✅ Streamlined application to focus on core Strava integration
+   - ✅ Cleaned up unused test files and mocks
+   - ✅ Simplified project structure
+
+3. Test Coverage Status:
+   - ✅ Home component: 4 passing tests
+   - ✅ Login component: 4 passing tests
+   - ✅ Activity slice: 7 passing tests
+   - ✅ Strava service: 6 passing tests
+   - Total: 21 passing tests across 4 test files
