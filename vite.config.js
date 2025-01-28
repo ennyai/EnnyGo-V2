@@ -16,9 +16,9 @@ export default defineConfig(({ mode }) => {
       },
     },
     define: {
-      // Pass environment variables to the client
-      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL),
-      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY),
+      // Ensure environment variables are properly stringified
+      __VITE_SUPABASE_URL__: `"${process.env.VITE_SUPABASE_URL}"`,
+      __VITE_SUPABASE_ANON_KEY__: `"${process.env.VITE_SUPABASE_ANON_KEY}"`,
     },
     test: {
       globals: true,

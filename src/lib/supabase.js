@@ -4,9 +4,9 @@ import { createClient } from '@supabase/supabase-js';
 const getSupabaseConfig = () => {
   // Try different ways to get the config
   const config = {
-    // Try import.meta.env first (Vite's way)
-    url: import.meta.env?.VITE_SUPABASE_URL,
-    key: import.meta.env?.VITE_SUPABASE_ANON_KEY,
+    // Try both the Vite way and our defined variables
+    url: import.meta.env.VITE_SUPABASE_URL || window.__VITE_SUPABASE_URL__,
+    key: import.meta.env.VITE_SUPABASE_ANON_KEY || window.__VITE_SUPABASE_ANON_KEY__,
   };
 
   // Log the current environment and configuration status
@@ -14,6 +14,8 @@ const getSupabaseConfig = () => {
   console.log('Supabase Config Status:', {
     hasUrl: Boolean(config.url),
     hasKey: Boolean(config.key),
+    url: config.url ? 'present' : 'missing',
+    key: config.key ? 'present' : 'missing'
   });
 
   return config;
@@ -52,7 +54,7 @@ let supabase;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error(
-    'Missing Supabase configuration:',
+    'Missing Supabase environment variables:',
     {
       url: supabaseUrl ? 'present' : 'missing',
       key: supabaseAnonKey ? 'present' : 'missing'
