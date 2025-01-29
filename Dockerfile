@@ -68,7 +68,7 @@ COPY --from=builder /app/src/utils ./src/utils
 
 # Set runtime environment
 ENV NODE_ENV=production
-ENV PORT=3001
+ENV PORT=3000
 ENV SUPABASE_URL=$SUPABASE_URL
 ENV SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
 ENV SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY
@@ -80,4 +80,4 @@ ENV WEBHOOK_CALLBACK_URL=$WEBHOOK_CALLBACK_URL
 EXPOSE $PORT
 
 # Start the server
-CMD ["yarn", "start"] 
+CMD ["yarn", "start"]
