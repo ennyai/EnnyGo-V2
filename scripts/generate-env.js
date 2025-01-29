@@ -21,6 +21,17 @@ console.log('\nChecking environment variables...');
 
 // Required Backend Variables
 const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Required Frontend Variables
+const stravaClientId = process.env.VITE_STRAVA_CLIENT_ID;
+const stravaClientSecret = process.env.VITE_STRAVA_CLIENT_SECRET;
+const stravaRedirectUri = process.env.VITE_STRAVA_REDIRECT_URI;
+const frontendUrl = process.env.FRONTEND_URL;
+
+// Validate Backend Variables
+console.log('\nValidating Backend Variables:');
 if (!supabaseUrl || !isValidUrl(supabaseUrl)) {
   console.error('❌ Error: Invalid or missing SUPABASE_URL');
   process.exit(1);
@@ -28,32 +39,36 @@ if (!supabaseUrl || !isValidUrl(supabaseUrl)) {
   console.log('✅ SUPABASE_URL: Valid');
 }
 
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-if (!supabaseAnonKey) {
-  console.error('❌ Error: Missing SUPABASE_ANON_KEY');
+if (!supabaseAnonKey || supabaseAnonKey.length < 1) {
+  console.error('❌ Error: Invalid or missing SUPABASE_ANON_KEY');
   process.exit(1);
 } else {
-  console.log('✅ SUPABASE_ANON_KEY: Present');
+  console.log('✅ SUPABASE_ANON_KEY: Present and valid');
 }
 
-// Required Frontend Variables
-const stravaClientId = process.env.VITE_STRAVA_CLIENT_ID;
-if (!stravaClientId) {
-  console.error('❌ Error: Missing VITE_STRAVA_CLIENT_ID');
+if (!supabaseServiceRoleKey || supabaseServiceRoleKey.length < 1) {
+  console.error('❌ Error: Invalid or missing SUPABASE_SERVICE_ROLE_KEY');
+  process.exit(1);
+} else {
+  console.log('✅ SUPABASE_SERVICE_ROLE_KEY: Present and valid');
+}
+
+// Validate Frontend Variables
+console.log('\nValidating Frontend Variables:');
+if (!stravaClientId || isNaN(Number(stravaClientId))) {
+  console.error('❌ Error: Invalid or missing VITE_STRAVA_CLIENT_ID');
   process.exit(1);
 } else {
   console.log('✅ VITE_STRAVA_CLIENT_ID:', stravaClientId);
 }
 
-const stravaClientSecret = process.env.VITE_STRAVA_CLIENT_SECRET;
-if (!stravaClientSecret) {
-  console.error('❌ Error: Missing VITE_STRAVA_CLIENT_SECRET');
+if (!stravaClientSecret || stravaClientSecret.length < 1) {
+  console.error('❌ Error: Invalid or missing VITE_STRAVA_CLIENT_SECRET');
   process.exit(1);
 } else {
-  console.log('✅ VITE_STRAVA_CLIENT_SECRET: Present');
+  console.log('✅ VITE_STRAVA_CLIENT_SECRET: Present and valid');
 }
 
-const stravaRedirectUri = process.env.VITE_STRAVA_REDIRECT_URI;
 if (!stravaRedirectUri || !isValidUrl(stravaRedirectUri)) {
   console.error('❌ Error: Invalid or missing VITE_STRAVA_REDIRECT_URI');
   process.exit(1);
@@ -61,22 +76,35 @@ if (!stravaRedirectUri || !isValidUrl(stravaRedirectUri)) {
   console.log('✅ VITE_STRAVA_REDIRECT_URI:', stravaRedirectUri);
 }
 
+if (!frontendUrl || !isValidUrl(frontendUrl)) {
+  console.error('❌ Error: Invalid or missing FRONTEND_URL');
+  process.exit(1);
+} else {
+  console.log('✅ FRONTEND_URL:', frontendUrl);
+}
+
 // Optional Frontend Variables (with defaults)
 const stravaAuthUrl = process.env.VITE_STRAVA_AUTH_URL || 'https://www.strava.com/oauth/authorize';
 const stravaTokenUrl = process.env.VITE_STRAVA_TOKEN_URL || 'https://www.strava.com/oauth/token';
-const apiUrl = process.env.VITE_API_URL || 'https://ennygo-v2-production.up.railway.app/api';
-const stravaWebhookUrl = process.env.VITE_STRAVA_WEBHOOK_URL || 'https://ennygo-v2-production.up.railway.app/api/strava/webhook';
+const apiUrl = process.env.VITE_API_URL || process.env.FRONTEND_URL + '/api';
+const stravaWebhookUrl = process.env.VITE_STRAVA_WEBHOOK_URL || process.env.WEBHOOK_CALLBACK_URL;
+const stravaVerifyToken = process.env.STRAVA_VERIFY_TOKEN || 'default_verify_token';
 
 console.log('\nOptional variables:');
 console.log('ℹ️ VITE_STRAVA_AUTH_URL:', stravaAuthUrl);
 console.log('ℹ️ VITE_STRAVA_TOKEN_URL:', stravaTokenUrl);
 console.log('ℹ️ VITE_API_URL:', apiUrl);
 console.log('ℹ️ VITE_STRAVA_WEBHOOK_URL:', stravaWebhookUrl);
+console.log('ℹ️ STRAVA_VERIFY_TOKEN:', stravaVerifyToken ? 'Present' : 'Missing');
 
 // Create the .env file content
 const envContent = `# Backend Variables
 SUPABASE_URL=${supabaseUrl}
 SUPABASE_ANON_KEY=${supabaseAnonKey}
+SUPABASE_SERVICE_ROLE_KEY=${supabaseServiceRoleKey}
+FRONTEND_URL=${frontendUrl}
+STRAVA_VERIFY_TOKEN=${stravaVerifyToken}
+WEBHOOK_CALLBACK_URL=${process.env.WEBHOOK_CALLBACK_URL || stravaWebhookUrl}
 
 # Frontend Variables (Required)
 VITE_SUPABASE_URL=${supabaseUrl}
