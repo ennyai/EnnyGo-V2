@@ -88,7 +88,7 @@ app.get('/health', (req, res) => {
     },
     env: {
       NODE_ENV: nodeEnv,
-      FRONTEND_URL: frontendUrl,
+      FRONTEND_URL: frontendUrl.replace(/;$/, ''), // Remove any trailing semicolon
       SUPABASE_URL: supabaseUrl ? 'present' : 'missing',
       SUPABASE_ANON_KEY: supabaseAnonKey ? 'present' : 'missing'
     }
@@ -105,7 +105,12 @@ if (nodeEnv === 'production') {
 
   if (fs.existsSync(distPath)) {
     console.log('\nServing static files from:', distPath);
-    app.use(express.static(distPath));
+    // Serve static files with proper caching headers
+    app.use(express.static(distPath, {
+      maxAge: '1h',
+      etag: true,
+      lastModified: true
+    }));
   } else {
     console.error('\nError: Build directory not found!');
     console.log('Current directory structure:');
@@ -117,17 +122,32 @@ if (nodeEnv === 'production') {
   app.use(express.static(publicPath));
 }
 
-// SPA fallback - must be after static files
+// Log all requests for debugging
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
+// SPA fallback - must be after static files but before API routes
 app.get('/*', (req, res, next) => {
+  // Skip API routes
   if (req.path.startsWith('/api/')) {
     return next();
   }
 
   const indexPath = path.join(__dirname, '../../dist/index.html');
+  console.log(`Attempting to serve SPA fallback for: ${req.path}`);
   
   if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
+    console.log(`Serving index.html for path: ${req.path}`);
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        console.error(`Error sending index.html for ${req.path}:`, err);
+        next(err);
+      }
+    });
   } else {
+    console.error(`index.html not found at: ${indexPath}`);
     res.status(404).send('Application not found. Please ensure the application is built correctly.');
   }
 });

@@ -7,16 +7,17 @@ export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '');
 
-  // Get Supabase variables from either format
-  const supabaseUrl = env.VITE_SUPABASE_URL || env.SUPABASE_URL;
-  const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY;
+  // Get Supabase variables from either format and clean any trailing semicolons
+  const supabaseUrl = (env.VITE_SUPABASE_URL || env.SUPABASE_URL || '').replace(/;$/, '');
+  const supabaseAnonKey = (env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || '').replace(/;$/, '');
+  const frontendUrl = (env.FRONTEND_URL || '').replace(/;$/, '');
 
   // Log environment variables during build
-  console.log('Build Environment:', mode);
+  console.log('\nBuild Environment:', mode);
   console.log('Environment Variables Status:', {
     SUPABASE_URL: supabaseUrl ? 'present' : 'missing',
     SUPABASE_ANON_KEY: supabaseAnonKey ? 'present' : 'missing',
-    FRONTEND_URL: env.FRONTEND_URL ? 'present' : 'missing'
+    FRONTEND_URL: frontendUrl ? 'present' : 'missing'
   });
 
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -35,7 +36,7 @@ export default defineConfig(({ mode }) => {
       // Pass environment variables to the client
       'process.env.VITE_SUPABASE_URL': JSON.stringify(supabaseUrl),
       'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(supabaseAnonKey),
-      'process.env.FRONTEND_URL': JSON.stringify(env.FRONTEND_URL),
+      'process.env.FRONTEND_URL': JSON.stringify(frontendUrl),
       'process.env.NODE_ENV': JSON.stringify(mode)
     },
     test: {
@@ -66,11 +67,12 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 3000,
-      host: true, // needed for docker/railway
+      host: true,
       proxy: {
         '/api': {
           target: 'http://localhost:3001',
           changeOrigin: true,
+          secure: false
         },
       },
       historyApiFallback: true
