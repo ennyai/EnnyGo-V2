@@ -5,8 +5,8 @@ export class StravaService {
   static async exchangeToken(code) {
     try {
       const response = await axios.post('https://www.strava.com/oauth/token', {
-        client_id: process.env.VITE_STRAVA_CLIENT_ID,
-        client_secret: process.env.VITE_STRAVA_CLIENT_SECRET,
+        client_id: process.env.STRAVA_CLIENT_ID,
+        client_secret: process.env.STRAVA_CLIENT_SECRET,
         code,
         grant_type: 'authorization_code'
       });
@@ -21,8 +21,8 @@ export class StravaService {
   static async refreshToken(refreshToken) {
     try {
       const response = await axios.post('https://www.strava.com/oauth/token', {
-        client_id: process.env.VITE_STRAVA_CLIENT_ID,
-        client_secret: process.env.VITE_STRAVA_CLIENT_SECRET,
+        client_id: process.env.STRAVA_CLIENT_ID,
+        client_secret: process.env.STRAVA_CLIENT_SECRET,
         refresh_token: refreshToken,
         grant_type: 'refresh_token'
       });
@@ -144,4 +144,4 @@ export class StravaService {
       throw error;
     }
   }
-} 
+}
