@@ -10,7 +10,7 @@ import {
   startConnecting,
   connectionSuccess,
   connectionFailed,
-  disconnect,
+  disconnected,
 } from '@/store/slices/stravaSlice';
 import { useActivities } from '@/hooks/useActivities';
 import { Trophy, MapPin, Timer, Activity } from 'lucide-react';
@@ -227,7 +227,7 @@ export default function Dashboard() {
 
       // Clear local storage and Redux state
       clientStorage.clearStravaData();
-      dispatch(disconnect());
+      dispatch(disconnected());
       
       toast({
         title: "Disconnected from Strava",

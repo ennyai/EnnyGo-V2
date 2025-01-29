@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { LogOut } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { disconnect } from '../../store/slices/stravaSlice';
+import { disconnected } from '../../store/slices/stravaSlice';
 import { clientStorage } from '@/utils/storage';
 import { useToast } from '../ui/use-toast';
 import { supabase } from '@/lib/supabase';
@@ -45,17 +45,21 @@ export default function DashboardNavbar() {
 
       if (error) {
         console.error('Error removing Strava tokens:', error);
-        throw new Error('Failed to remove Strava tokens');
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Unable to disconnect. Please try signing out and back in.",
+        });
+        return;
       }
 
       // Clear local storage and Redux state
       clientStorage.clearStravaData();
-      dispatch(disconnect());
+      dispatch(disconnected());
       
       toast({
         title: "Disconnected from Strava",
         description: "Your Strava connection has been removed.",
-        variant: "default",
       });
     } catch (error) {
       console.error('Error disconnecting from Strava:', error);
@@ -71,7 +75,7 @@ export default function DashboardNavbar() {
     try {
       await supabase.auth.signOut();
       clientStorage.clearStravaData();
-      dispatch(disconnect());
+      dispatch(disconnected());
       navigate('/');
       toast({
         title: "Signed out",
