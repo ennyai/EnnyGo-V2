@@ -13,22 +13,20 @@ const port = process.env.PORT || 3001;
 const nodeEnv = process.env.NODE_ENV || 'development';
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
+// Log environment variables on startup
+console.log('\nEnvironment Status:', {
+  NODE_ENV: nodeEnv,
+  FRONTEND_URL: frontendUrl,
+  SUPABASE_URL: process.env.VITE_SUPABASE_URL ? 'present' : 'missing',
+  SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ? 'present' : 'missing'
+});
+
 const app = express();
 
 // Middleware
 app.use(morgan(nodeEnv === 'production' ? 'combined' : 'dev'));
 app.use(cors());
 app.use(express.json());
-
-// Inject environment variables into config.js
-const configPath = path.join(__dirname, '../../dist/config.js');
-if (fs.existsSync(configPath)) {
-  let configContent = fs.readFileSync(configPath, 'utf8');
-  configContent = configContent
-    .replace('%%VITE_SUPABASE_URL%%', process.env.VITE_SUPABASE_URL || '')
-    .replace('%%VITE_SUPABASE_ANON_KEY%%', process.env.VITE_SUPABASE_ANON_KEY || '');
-  fs.writeFileSync(configPath, configContent);
-}
 
 // Function to check and log directory contents
 const logDirectoryContents = (dirPath) => {
@@ -74,6 +72,12 @@ app.get('/health', (req, res) => {
       indexExists: fs.existsSync(indexPath),
       directory: __dirname,
       cwd: process.cwd()
+    },
+    env: {
+      NODE_ENV: nodeEnv,
+      FRONTEND_URL: frontendUrl,
+      SUPABASE_URL: process.env.VITE_SUPABASE_URL ? 'present' : 'missing',
+      SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ? 'present' : 'missing'
     }
   });
 });
@@ -132,7 +136,7 @@ app.use((err, req, res, next) => {
 
 // Start server
 const server = app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on port ${port} in ${nodeEnv} mode`);
+  console.log(`\nServer running on port ${port} in ${nodeEnv} mode`);
   console.log(`Frontend URL: ${frontendUrl}`);
   console.log('Current directory:', __dirname);
   console.log('Process directory:', process.cwd());

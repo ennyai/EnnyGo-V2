@@ -5,14 +5,14 @@ import path from 'path';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
-  // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
   const env = loadEnv(mode, process.cwd(), '');
 
   // Log environment variables during build
+  console.log('Build Environment:', mode);
   console.log('Environment Variables Status:', {
-    VITE_SUPABASE_URL: env.VITE_SUPABASE_URL ? 'present' : 'missing',
-    VITE_SUPABASE_ANON_KEY: env.VITE_SUPABASE_ANON_KEY ? 'present' : 'missing',
-    MODE: mode
+    SUPABASE_URL: env.VITE_SUPABASE_URL ? 'present' : 'missing',
+    SUPABASE_ANON_KEY: env.VITE_SUPABASE_ANON_KEY ? 'present' : 'missing',
+    FRONTEND_URL: env.FRONTEND_URL ? 'present' : 'missing'
   });
 
   return {
@@ -23,10 +23,11 @@ export default defineConfig(({ mode }) => {
       },
     },
     define: {
-      // Pass environment variables to the client using the loaded env object
-      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
-      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
-      'import.meta.env.MODE': JSON.stringify(mode)
+      // Pass environment variables to the client
+      'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
+      'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
+      'process.env.FRONTEND_URL': JSON.stringify(env.FRONTEND_URL),
+      'process.env.NODE_ENV': JSON.stringify(mode)
     },
     test: {
       globals: true,
