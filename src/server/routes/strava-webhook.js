@@ -176,4 +176,51 @@ router.post('/activities', async (req, res) => {
   }
 });
 
+// OAuth callback endpoint
+router.get('/callback', async (req, res) => {
+  const { code, error } = req.query;
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+  if (error) {
+    console.error('Strava OAuth error:', error);
+    return res.redirect(`${frontendUrl}/dashboard?error=${error}`);
+  }
+
+  if (!code) {
+    console.error('No code provided in callback');
+    return res.redirect(`${frontendUrl}/dashboard?error=no_code`);
+  }
+
+  try {
+    // Exchange the code for tokens
+    const tokenData = await StravaService.exchangeToken(code);
+    
+    // Get the athlete data
+    const athlete = await StravaService.getAthlete(tokenData.access_token);
+
+    // Store tokens and athlete data in Supabase
+    const supabase = getSupabaseClient();
+    const { error: upsertError } = await supabase
+      .from('strava_tokens')
+      .upsert({
+        user_id: req.user?.id, // You'll need to handle user authentication
+        strava_athlete_id: athlete.id.toString(),
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token,
+        expires_at: tokenData.expires_at
+      });
+
+    if (upsertError) {
+      console.error('Error storing tokens:', upsertError);
+      return res.redirect(`${frontendUrl}/dashboard?error=database_error`);
+    }
+
+    // Redirect back to the frontend with success
+    res.redirect(`${frontendUrl}/dashboard?success=true`);
+  } catch (error) {
+    console.error('Error in Strava callback:', error);
+    res.redirect(`${frontendUrl}/dashboard?error=exchange_failed`);
+  }
+});
+
 export default router; 
