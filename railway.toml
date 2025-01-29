@@ -6,8 +6,7 @@ buildCommand = "yarn install --frozen-lockfile && yarn build"
 startCommand = "yarn start"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
-restartPolicyType = "on-failure"
-restartPolicyMaxRetries = 3
+restartPolicy = "always"
 numReplicas = 1
 
 [deploy.envs]
