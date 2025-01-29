@@ -44,7 +44,15 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    const allowedOrigins = [frontendUrl, 'https://ennygo-v2-production.up.railway.app'];
+    const allowedOrigins = [
+      frontendUrl,
+      'https://ennygo-v2-production.up.railway.app',
+      'https://ennygo-v2-frontend.up.railway.app', // Frontend URL
+      'https://ennygo-v2-backend.up.railway.app',  // Backend URL
+      'http://localhost:3000',  // Local frontend
+      'http://localhost:3001'   // Local backend
+    ];
+    
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
       return callback(new Error(msg), false);
