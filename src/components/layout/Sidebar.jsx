@@ -20,7 +20,7 @@ import {
 } from '../ui/sheet';
 import { supabase } from '@/lib/supabase';
 import { clientStorage } from '@/utils/storage';
-import { disconnect } from '@/store/slices/stravaSlice';
+import { disconnected } from '@/store/slices/stravaSlice';
 
 const NavigationItems = ({ className }) => {
   const location = useLocation();
@@ -80,7 +80,7 @@ export default function Sidebar() {
     try {
       await supabase.auth.signOut();
       clientStorage.clearStravaData();
-      dispatch(disconnect());
+      dispatch(disconnected());
       navigate('/');
       toast({
         title: "Signed out",
