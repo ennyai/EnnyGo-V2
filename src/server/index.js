@@ -27,9 +27,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Railway specific port handling
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3001;  // Default to 3001 for backend
 const nodeEnv = process.env.NODE_ENV || 'development';
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';  // Frontend on 3000
 
 const app = express();
 
@@ -47,8 +47,6 @@ app.use(cors({
     const allowedOrigins = [
       frontendUrl,
       'https://ennygo-v2-production.up.railway.app',
-      'https://ennygo-v2-frontend.up.railway.app', // Frontend URL
-      'https://ennygo-v2-backend.up.railway.app',  // Backend URL
       'http://localhost:3000',  // Local frontend
       'http://localhost:3001'   // Local backend
     ];
