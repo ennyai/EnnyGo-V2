@@ -3,7 +3,7 @@ builder = "nixpacks"
 buildCommand = "yarn install --frozen-lockfile && yarn build"
 
 [deploy]
-startCommand = "yarn start"
+startCommand = "node src/server/index.js"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicy = "always"
@@ -11,7 +11,6 @@ numReplicas = 1
 
 [deploy.envs]
 NODE_ENV = "production"
-PORT = "3001"
 
 [nixpacks]
 node_version = "18.x" 

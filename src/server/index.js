@@ -147,14 +147,63 @@ app.use((err, req, res, next) => {
 // Start server with retry mechanism
 const startServer = async (retries = 5) => {
   try {
+    // Log environment information
+    console.log('Starting server with configuration:');
+    console.log('- PORT:', port);
+    console.log('- NODE_ENV:', nodeEnv);
+    console.log('- FRONTEND_URL:', frontendUrl);
+    console.log('- Process ID:', process.pid);
+    console.log('- Platform:', process.platform);
+    console.log('- Node Version:', process.version);
+    console.log('- Memory Usage:', process.memoryUsage());
+    console.log('- Current Directory:', process.cwd());
+    console.log('- Dist Path:', distPath);
+    console.log('- Dist exists:', fs.existsSync(distPath));
+
+    // Try to list dist directory contents
+    try {
+      const distContents = fs.readdirSync(distPath);
+      console.log('- Dist contents:', distContents);
+    } catch (err) {
+      console.error('Error reading dist directory:', err);
+    }
+
     const server = app.listen(port, '0.0.0.0', () => {
-      console.log(`Server running on port ${port} in ${nodeEnv} mode`);
-      console.log(`Frontend URL: ${frontendUrl}`);
-      console.log('Server is ready to handle requests');
+      console.log(`\nServer successfully started:`);
+      console.log(`- Port: ${port}`);
+      console.log(`- Environment: ${nodeEnv}`);
+      console.log(`- Frontend URL: ${frontendUrl}`);
+      console.log('- Server is ready to handle requests\n');
+
+      // Test if we can make a request to our own health endpoint
+      try {
+        const http = require('http');
+        const healthCheck = http.get(`http://localhost:${port}/health`, (res) => {
+          let data = '';
+          res.on('data', (chunk) => { data += chunk; });
+          res.on('end', () => {
+            console.log('Health check response:', data);
+          });
+        }).on('error', (err) => {
+          console.error('Health check failed:', err);
+        });
+        healthCheck.end();
+      } catch (error) {
+        console.error('Error performing health check:', error);
+      }
     });
 
     server.on('error', (error) => {
-      console.error('Server error:', error);
+      console.error('Detailed server error:', {
+        code: error.code,
+        message: error.message,
+        stack: error.stack,
+        errno: error.errno,
+        syscall: error.syscall,
+        address: error.address,
+        port: error.port
+      });
+
       if (error.code === 'EADDRINUSE') {
         console.log(`Port ${port} is busy, retrying...`);
         setTimeout(() => {
@@ -182,7 +231,12 @@ const startServer = async (retries = 5) => {
     process.on('SIGINT', shutdown);
 
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error('Detailed startup error:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      errno: error.errno
+    });
     if (retries > 0) {
       console.log(`Retrying in 1 second... (${retries} attempts left)`);
       setTimeout(() => startServer(retries - 1), 1000);
