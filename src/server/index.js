@@ -13,13 +13,26 @@ const port = process.env.PORT || 3001;
 const nodeEnv = process.env.NODE_ENV || 'development';
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
+// Get Supabase variables from either format
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+
+// Set them in the environment with VITE_ prefix for the frontend
+process.env.VITE_SUPABASE_URL = supabaseUrl;
+process.env.VITE_SUPABASE_ANON_KEY = supabaseAnonKey;
+
 // Log environment variables on startup
 console.log('\nEnvironment Status:', {
   NODE_ENV: nodeEnv,
   FRONTEND_URL: frontendUrl,
-  SUPABASE_URL: process.env.VITE_SUPABASE_URL ? 'present' : 'missing',
-  SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ? 'present' : 'missing'
+  SUPABASE_URL: supabaseUrl ? 'present' : 'missing',
+  SUPABASE_ANON_KEY: supabaseAnonKey ? 'present' : 'missing'
 });
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('\nWARNING: Missing Supabase configuration!');
+  console.log('Available environment variables:', Object.keys(process.env));
+}
 
 const app = express();
 
@@ -76,8 +89,8 @@ app.get('/health', (req, res) => {
     env: {
       NODE_ENV: nodeEnv,
       FRONTEND_URL: frontendUrl,
-      SUPABASE_URL: process.env.VITE_SUPABASE_URL ? 'present' : 'missing',
-      SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ? 'present' : 'missing'
+      SUPABASE_URL: supabaseUrl ? 'present' : 'missing',
+      SUPABASE_ANON_KEY: supabaseAnonKey ? 'present' : 'missing'
     }
   });
 });
