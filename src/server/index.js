@@ -27,9 +27,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Railway specific port handling
-const port = process.env.PORT || 3001;  // Default to 3001 for backend
+const port = process.env.PORT || 3001;  // Use Railway's PORT env variable
 const nodeEnv = process.env.NODE_ENV || 'development';
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';  // Frontend on 3000
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 const app = express();
 
@@ -47,11 +47,13 @@ app.use(cors({
     const allowedOrigins = [
       frontendUrl,
       'https://ennygo-v2-production.up.railway.app',
-      'http://localhost:3000',  // Local frontend
-      'http://localhost:3001'   // Local backend
+      'https://ennygo-v2-production.railway.app', // Added .railway.app domain
+      'http://localhost:3000',
+      'http://localhost:3001'
     ];
     
     if (allowedOrigins.indexOf(origin) === -1) {
+      console.warn(`Rejected CORS request from origin: ${origin}`);
       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
       return callback(new Error(msg), false);
     }
@@ -82,8 +84,8 @@ if (fs.existsSync(configPath)) {
   try {
     let configContent = fs.readFileSync(configPath, 'utf8');
     configContent = configContent
-      .replace('%%VITE_SUPABASE_URL%%', process.env.VITE_SUPABASE_URL || '')
-      .replace('%%VITE_SUPABASE_ANON_KEY%%', process.env.VITE_SUPABASE_ANON_KEY || '');
+      .replace('%%VITE_SUPABASE_URL%%', process.env.SUPABASE_URL || '')
+      .replace('%%VITE_SUPABASE_ANON_KEY%%', process.env.SUPABASE_SERVICE_ROLE_KEY || '');
     fs.writeFileSync(configPath, configContent);
   } catch (error) {
     console.error('Error injecting environment variables:', error);
@@ -247,4 +249,4 @@ const startServer = async (retries = 5) => {
 
 startServer();
 
-export default app; 
+export default app;
