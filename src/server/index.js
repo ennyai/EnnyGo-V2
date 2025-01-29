@@ -26,8 +26,8 @@ process.on('uncaughtException', (error) => {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Railway specific port handling
-const port = process.env.PORT || 3001;  // Use Railway's PORT env variable
+// Use Railway's PORT env variable in production, fallback to 3000 in development
+const port = process.env.PORT || 3000;
 const nodeEnv = process.env.NODE_ENV || 'development';
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
@@ -47,9 +47,9 @@ app.use(cors({
     const allowedOrigins = [
       frontendUrl,
       'https://ennygo-v2-production.up.railway.app',
-      'https://ennygo-v2-production.railway.app', // Added .railway.app domain
-      'http://localhost:3000',
-      'http://localhost:3001'
+      'https://ennygo-v2-production.railway.app',
+      'https://ennygo-v2.railway.internal',
+      'http://localhost:3000'
     ];
     
     if (allowedOrigins.indexOf(origin) === -1) {

@@ -68,7 +68,7 @@ COPY --from=builder /app/src/utils ./src/utils
 
 # Set runtime environment
 ENV NODE_ENV=production
-ENV PORT=3000
+# Note: PORT will be provided by Railway
 ENV SUPABASE_URL=$SUPABASE_URL
 ENV SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
 ENV SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY

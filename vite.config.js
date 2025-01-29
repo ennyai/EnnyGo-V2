@@ -50,7 +50,9 @@ export default defineConfig(({ mode }) => {
       host: true, // needed for docker/railway
       proxy: {
         '/api': {
-          target: 'http://localhost:3001',
+          target: process.env.NODE_ENV === 'production' 
+            ? 'https://ennygo-v2-production.up.railway.app'
+            : 'http://localhost:3000',
           changeOrigin: true,
         },
       },
