@@ -18,7 +18,7 @@ const app = express();
 // Middleware
 app.use(morgan(nodeEnv === 'production' ? 'combined' : 'dev'));
 app.use(cors({
-  origin: frontendUrl,
+  origin: [frontendUrl, 'http://localhost:3000', 'http://localhost:3001'],
   credentials: true
 }));
 app.use(express.json());
@@ -33,28 +33,47 @@ if (fs.existsSync(configPath)) {
   fs.writeFileSync(configPath, configContent);
 }
 
-// Serve static files from the React app
+// Function to check and log directory contents
+const logDirectoryContents = (dirPath) => {
+  try {
+    if (fs.existsSync(dirPath)) {
+      console.log(`Contents of ${dirPath}:`);
+      const files = fs.readdirSync(dirPath);
+      files.forEach(file => {
+        console.log(` - ${file}`);
+      });
+    } else {
+      console.log(`Directory not found: ${dirPath}`);
+    }
+  } catch (error) {
+    console.error(`Error reading directory ${dirPath}:`, error);
+  }
+};
+
+// In production, serve static files and log directory contents
 if (nodeEnv === 'production') {
-  // In production, serve from the dist directory
   const distPath = path.join(__dirname, '../../dist');
   const publicPath = path.join(__dirname, '../../public');
-  
-  // Check if dist directory exists
+
+  // Log directory contents for debugging
+  logDirectoryContents(distPath);
+  logDirectoryContents(publicPath);
+
+  // Serve static files from dist directory
   if (fs.existsSync(distPath)) {
     console.log('Serving static files from:', distPath);
-    app.use(express.static(distPath));
-  } else {
-    console.log('Warning: dist directory not found');
+    app.use(express.static(distPath, { maxAge: '1h' }));
   }
-  
-  // Also serve from public directory if it exists
+
+  // Fallback to public directory
   if (fs.existsSync(publicPath)) {
     console.log('Serving static files from:', publicPath);
-    app.use(express.static(publicPath));
+    app.use(express.static(publicPath, { maxAge: '1h' }));
   }
 } else {
-  // In development, serve from the public directory
-  app.use(express.static(path.join(__dirname, '../../public')));
+  // In development, serve from public directory
+  const publicPath = path.join(__dirname, '../../public');
+  app.use(express.static(publicPath));
 }
 
 // API Routes
@@ -65,17 +84,36 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy',
     environment: nodeEnv,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    directories: {
+      dist: fs.existsSync(path.join(__dirname, '../../dist')),
+      public: fs.existsSync(path.join(__dirname, '../../public'))
+    }
   });
 });
 
 // Serve React app for all other routes
 app.get('*', (req, res) => {
   const indexPath = path.join(__dirname, '../../dist/index.html');
+  console.log('Attempting to serve:', indexPath);
+  
   if (fs.existsSync(indexPath)) {
     res.sendFile(indexPath);
   } else {
-    res.status(404).send('Application files not found. Please ensure the application is built correctly.');
+    console.error('index.html not found at:', indexPath);
+    const publicIndexPath = path.join(__dirname, '../../public/index.html');
+    
+    if (fs.existsSync(publicIndexPath)) {
+      console.log('Serving from public directory instead');
+      res.sendFile(publicIndexPath);
+    } else {
+      res.status(404).send(`
+        Application files not found. Build status:
+        - Dist index.html: ${fs.existsSync(indexPath)}
+        - Public index.html: ${fs.existsSync(publicIndexPath)}
+        Please ensure the application is built correctly.
+      `);
+    }
   }
 });
 
@@ -94,6 +132,8 @@ try {
   app.listen(port, () => {
     console.log(`Server running on port ${port} in ${nodeEnv} mode`);
     console.log(`Frontend URL: ${frontendUrl}`);
+    console.log('Current directory:', __dirname);
+    console.log('Process directory:', process.cwd());
   });
 } catch (error) {
   console.error('Failed to start server:', error);

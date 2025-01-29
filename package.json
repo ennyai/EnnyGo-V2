@@ -7,7 +7,7 @@
     "start": "node src/server/index.js",
     "prebuild": "node scripts/generate-env.js",
     "build": "vite build",
-    "postbuild": "cp -r dist/* public/",
+    "postbuild": "mkdir -p public && cp -r dist/* public/",
     "dev": "vite",
     "preview": "vite preview",
     "dev:client": "vite --port 3000",
