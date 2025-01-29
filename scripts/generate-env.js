@@ -1,48 +1,82 @@
 // Generate environment variables for Vite
-import { writeFileSync } from 'fs';
-import { join } from 'path';
+import fs from 'fs';
+import path from 'path';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 
 // Get current file's directory
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = path.dirname(__filename);
 
-// Validate URL format
-const isValidUrl = (url) => {
+function isValidUrl(string) {
   try {
-    new URL(url);
+    new URL(string);
     return true;
-  } catch {
+  } catch (_) {
     return false;
   }
-};
+}
 
-// Validate environment variables
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+// Get environment variables
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const stravaClientId = process.env.VITE_STRAVA_CLIENT_ID;
+const stravaClientSecret = process.env.VITE_STRAVA_CLIENT_SECRET;
+const stravaRedirectUri = process.env.VITE_STRAVA_REDIRECT_URI;
+const stravaAuthUrl = process.env.VITE_STRAVA_AUTH_URL;
+const stravaTokenUrl = process.env.VITE_STRAVA_TOKEN_URL;
+const apiUrl = process.env.VITE_API_URL;
+const stravaWebhookUrl = process.env.VITE_STRAVA_WEBHOOK_URL;
 
-// Validate variables
+// Validate required variables
 if (!supabaseUrl || !isValidUrl(supabaseUrl)) {
-  console.error('Invalid or missing SUPABASE_URL:', supabaseUrl);
+  console.error('Error: Invalid or missing SUPABASE_URL');
   process.exit(1);
 }
 
 if (!supabaseAnonKey) {
-  console.error('Missing SUPABASE_ANON_KEY');
+  console.error('Error: Missing SUPABASE_ANON_KEY');
   process.exit(1);
 }
 
-// Create the env content
-const envContent = `
-VITE_SUPABASE_URL=${supabaseUrl}
+if (!stravaClientId) {
+  console.error('Error: Missing VITE_STRAVA_CLIENT_ID');
+  process.exit(1);
+}
+
+if (!stravaClientSecret) {
+  console.error('Error: Missing VITE_STRAVA_CLIENT_SECRET');
+  process.exit(1);
+}
+
+if (!stravaRedirectUri || !isValidUrl(stravaRedirectUri)) {
+  console.error('Error: Invalid or missing VITE_STRAVA_REDIRECT_URI');
+  process.exit(1);
+}
+
+// Create the .env file content
+const envContent = `VITE_SUPABASE_URL=${supabaseUrl}
 VITE_SUPABASE_ANON_KEY=${supabaseAnonKey}
-`.trim();
+VITE_STRAVA_CLIENT_ID=${stravaClientId}
+VITE_STRAVA_CLIENT_SECRET=${stravaClientSecret}
+VITE_STRAVA_REDIRECT_URI=${stravaRedirectUri}
+VITE_STRAVA_AUTH_URL=${stravaAuthUrl || 'https://www.strava.com/oauth/authorize'}
+VITE_STRAVA_TOKEN_URL=${stravaTokenUrl || 'https://www.strava.com/oauth/token'}
+VITE_API_URL=${apiUrl || 'https://ennygo-v2-production.up.railway.app/api'}
+VITE_STRAVA_WEBHOOK_URL=${stravaWebhookUrl || 'https://ennygo-v2-production.up.railway.app/api/strava/webhook'}
+`;
 
 // Write to .env file
-writeFileSync(join(process.cwd(), '.env'), envContent);
+const envPath = path.join(__dirname, '..', '.env');
+fs.writeFileSync(envPath, envContent);
 
-console.log('Generated Vite environment variables:', {
-  SUPABASE_URL: isValidUrl(supabaseUrl) ? '[VALID URL]' : '[INVALID URL]',
-  SUPABASE_ANON_KEY: supabaseAnonKey ? '[PRESENT]' : '[MISSING]'
-}); 
+// Log status (without exposing sensitive values)
+console.log('\nEnvironment variables written to .env file:');
+console.log('VITE_SUPABASE_URL:', supabaseUrl);
+console.log('VITE_SUPABASE_ANON_KEY:', '[HIDDEN]');
+console.log('VITE_STRAVA_CLIENT_ID:', stravaClientId);
+console.log('VITE_STRAVA_CLIENT_SECRET:', '[HIDDEN]');
+console.log('VITE_STRAVA_REDIRECT_URI:', stravaRedirectUri);
+console.log('VITE_STRAVA_AUTH_URL:', stravaAuthUrl || '[DEFAULT]');
+console.log('VITE_STRAVA_TOKEN_URL:', stravaTokenUrl || '[DEFAULT]');
+console.log('VITE_API_URL:', apiUrl || '[DEFAULT]');
+console.log('VITE_STRAVA_WEBHOOK_URL:', stravaWebhookUrl || '[DEFAULT]'); 
