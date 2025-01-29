@@ -4,10 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "node src/server/index.js",
+    "start": "NODE_ENV=production node src/server/index.js",
     "prebuild": "node scripts/generate-env.js",
     "build": "vite build",
-    "postbuild": "mkdir -p dist && cp -r dist/* dist/ || true",
     "dev": "vite",
     "preview": "vite preview",
     "dev:client": "vite --port 3000",
