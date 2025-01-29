@@ -1,1 +1,1 @@
-web: yarn install --frozen-lockfile && yarn build && NODE_ENV=production node src/server/index.js 
+web: NODE_ENV=production yarn install --frozen-lockfile && yarn build && node src/server/index.js 

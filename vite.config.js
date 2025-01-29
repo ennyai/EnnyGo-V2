@@ -37,11 +37,20 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       assetsDir: 'assets',
-      sourcemap: true,
-      // Ensure environment variables are replaced during build
+      emptyOutDir: true,
+      sourcemap: false,
+      manifest: true,
       rollupOptions: {
         output: {
-          manualChunks: undefined,
+          manualChunks: {
+            'vendor': [
+              'react',
+              'react-dom',
+              'react-router-dom',
+              'react-redux',
+              '@reduxjs/toolkit'
+            ],
+          },
         },
       },
     },

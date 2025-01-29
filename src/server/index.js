@@ -40,7 +40,17 @@ const logDirectoryContents = (dirPath) => {
       console.log(`Contents of ${dirPath}:`);
       const files = fs.readdirSync(dirPath);
       files.forEach(file => {
-        console.log(` - ${file}`);
+        const fullPath = path.join(dirPath, file);
+        const stats = fs.statSync(fullPath);
+        if (stats.isDirectory()) {
+          console.log(` - [DIR] ${file}`);
+          const subFiles = fs.readdirSync(fullPath);
+          subFiles.forEach(subFile => {
+            console.log(`   - ${subFile}`);
+          });
+        } else {
+          console.log(` - ${file}`);
+        }
       });
     } else {
       console.log(`Directory not found: ${dirPath}`);
@@ -50,25 +60,36 @@ const logDirectoryContents = (dirPath) => {
   }
 };
 
-// In production, serve static files and log directory contents
+// In production, serve static files
 if (nodeEnv === 'production') {
   const distPath = path.join(__dirname, '../../dist');
-  const publicPath = path.join(__dirname, '../../public');
-
+  
   // Log directory contents for debugging
+  console.log('\nChecking build directories...');
   logDirectoryContents(distPath);
-  logDirectoryContents(publicPath);
 
-  // Serve static files from dist directory
   if (fs.existsSync(distPath)) {
-    console.log('Serving static files from:', distPath);
-    app.use(express.static(distPath, { maxAge: '1h' }));
-  }
-
-  // Fallback to public directory
-  if (fs.existsSync(publicPath)) {
-    console.log('Serving static files from:', publicPath);
-    app.use(express.static(publicPath, { maxAge: '1h' }));
+    console.log('\nServing static files from:', distPath);
+    
+    // Serve static files with proper cache headers
+    app.use(express.static(distPath, {
+      maxAge: '1h',
+      etag: true,
+      lastModified: true,
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+          // Don't cache HTML files
+          res.setHeader('Cache-Control', 'no-cache');
+        } else if (filePath.includes('/assets/')) {
+          // Cache assets for longer
+          res.setHeader('Cache-Control', 'public, max-age=31536000');
+        }
+      },
+    }));
+  } else {
+    console.error('\nError: Build directory not found!');
+    console.log('Current directory structure:');
+    logDirectoryContents(path.join(__dirname, '../..'));
   }
 } else {
   // In development, serve from public directory
@@ -81,13 +102,18 @@ app.use('/api/strava', stravaWebhookRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
+  const distPath = path.join(__dirname, '../../dist');
+  const indexPath = path.join(distPath, 'index.html');
+  
   res.json({ 
     status: 'healthy',
     environment: nodeEnv,
     timestamp: new Date().toISOString(),
-    directories: {
-      dist: fs.existsSync(path.join(__dirname, '../../dist')),
-      public: fs.existsSync(path.join(__dirname, '../../public'))
+    build: {
+      distExists: fs.existsSync(distPath),
+      indexExists: fs.existsSync(indexPath),
+      directory: __dirname,
+      cwd: process.cwd()
     }
   });
 });
@@ -95,25 +121,20 @@ app.get('/health', (req, res) => {
 // Serve React app for all other routes
 app.get('*', (req, res) => {
   const indexPath = path.join(__dirname, '../../dist/index.html');
+  console.log(`\nRequest for: ${req.path}`);
   console.log('Attempting to serve:', indexPath);
   
   if (fs.existsSync(indexPath)) {
     res.sendFile(indexPath);
   } else {
     console.error('index.html not found at:', indexPath);
-    const publicIndexPath = path.join(__dirname, '../../public/index.html');
-    
-    if (fs.existsSync(publicIndexPath)) {
-      console.log('Serving from public directory instead');
-      res.sendFile(publicIndexPath);
-    } else {
-      res.status(404).send(`
-        Application files not found. Build status:
-        - Dist index.html: ${fs.existsSync(indexPath)}
-        - Public index.html: ${fs.existsSync(publicIndexPath)}
-        Please ensure the application is built correctly.
-      `);
-    }
+    res.status(404).send(`
+      Application files not found. Build status:
+      - Directory: ${__dirname}
+      - Index path: ${indexPath}
+      - Exists: ${fs.existsSync(indexPath)}
+      Please ensure the application is built correctly.
+    `);
   }
 });
 
@@ -123,14 +144,15 @@ app.use((err, req, res, next) => {
   console.error('Stack:', err.stack);
   res.status(500).json({
     error: 'Something went wrong!',
-    message: nodeEnv === 'development' ? err.message : 'Internal server error'
+    message: nodeEnv === 'development' ? err.message : 'Internal server error',
+    path: req.path
   });
 });
 
 // Start server
 try {
   app.listen(port, () => {
-    console.log(`Server running on port ${port} in ${nodeEnv} mode`);
+    console.log(`\nServer running on port ${port} in ${nodeEnv} mode`);
     console.log(`Frontend URL: ${frontendUrl}`);
     console.log('Current directory:', __dirname);
     console.log('Process directory:', process.cwd());
