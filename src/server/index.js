@@ -26,7 +26,7 @@ process.on('uncaughtException', (error) => {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Use Railway's PORT env variable in production, fallback to 3000 in development
+// Use Railway's PORT in production, fallback to 3000 in development
 const port = process.env.PORT || 3000;
 const nodeEnv = process.env.NODE_ENV || 'development';
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -176,7 +176,7 @@ const startServer = async (retries = 5) => {
       console.error('Error reading dist directory:', err);
     }
 
-    const server = app.listen(port, '0.0.0.0', () => {
+    const server = app.listen(port, '::', () => {
       console.log(`\nServer successfully started:`);
       console.log(`- Port: ${port}`);
       console.log(`- Environment: ${nodeEnv}`);
