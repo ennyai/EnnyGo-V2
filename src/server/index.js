@@ -34,7 +34,28 @@ if (fs.existsSync(configPath)) {
 }
 
 // Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../../dist')));
+if (nodeEnv === 'production') {
+  // In production, serve from the dist directory
+  const distPath = path.join(__dirname, '../../dist');
+  const publicPath = path.join(__dirname, '../../public');
+  
+  // Check if dist directory exists
+  if (fs.existsSync(distPath)) {
+    console.log('Serving static files from:', distPath);
+    app.use(express.static(distPath));
+  } else {
+    console.log('Warning: dist directory not found');
+  }
+  
+  // Also serve from public directory if it exists
+  if (fs.existsSync(publicPath)) {
+    console.log('Serving static files from:', publicPath);
+    app.use(express.static(publicPath));
+  }
+} else {
+  // In development, serve from the public directory
+  app.use(express.static(path.join(__dirname, '../../public')));
+}
 
 // API Routes
 app.use('/api/strava', stravaWebhookRouter);
@@ -50,7 +71,12 @@ app.get('/health', (req, res) => {
 
 // Serve React app for all other routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../dist/index.html'));
+  const indexPath = path.join(__dirname, '../../dist/index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('Application files not found. Please ensure the application is built correctly.');
+  }
 });
 
 // Error handling middleware

@@ -7,6 +7,8 @@
     "start": "node src/server/index.js",
     "prebuild": "node scripts/generate-env.js",
     "build": "vite build",
+    "postbuild": "cp -r dist/* public/",
+    "dev": "vite",
     "preview": "vite preview",
     "dev:client": "vite --port 3000",
     "dev:server": "nodemon src/server/index.js",

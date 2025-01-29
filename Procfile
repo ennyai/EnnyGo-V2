@@ -1,1 +1,1 @@
-web: npm install && npm run build && node server.js 
+web: yarn install && yarn build && yarn start 
