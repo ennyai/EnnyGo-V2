@@ -26,6 +26,7 @@ process.on('uncaughtException', (error) => {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Railway specific port handling
 const port = process.env.PORT || 3001;
 const nodeEnv = process.env.NODE_ENV || 'development';
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -43,7 +44,7 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    const allowedOrigins = [frontendUrl];
+    const allowedOrigins = [frontendUrl, 'https://ennygo-v2-production.up.railway.app'];
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
       return callback(new Error(msg), false);
@@ -111,7 +112,8 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     memory: process.memoryUsage(),
-    cpuUsage: process.cpuUsage()
+    cpuUsage: process.cpuUsage(),
+    port: port
   };
   
   res.json(health);
@@ -145,9 +147,10 @@ app.use((err, req, res, next) => {
 // Start server with retry mechanism
 const startServer = async (retries = 5) => {
   try {
-    const server = app.listen(port, () => {
+    const server = app.listen(port, '0.0.0.0', () => {
       console.log(`Server running on port ${port} in ${nodeEnv} mode`);
       console.log(`Frontend URL: ${frontendUrl}`);
+      console.log('Server is ready to handle requests');
     });
 
     server.on('error', (error) => {
