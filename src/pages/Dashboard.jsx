@@ -205,11 +205,26 @@ export default function Dashboard() {
   }, [location.search, dispatch, toast]);
 
   const handleStravaConnect = () => {
-    const clientId = import.meta.env.VITE_STRAVA_CLIENT_ID;
-    const redirectUri = `${window.location.origin}/dashboard`;
-    const scope = 'activity:read_all,activity:write';
-    
-    window.location.href = `https://www.strava.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "Please sign in to connect your Strava account.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const authUrl = StravaService.getAuthUrl(user.id);
+      window.location.href = authUrl;
+    } catch (error) {
+      console.error('Error generating Strava auth URL:', error);
+      toast({
+        title: "Error",
+        description: "Failed to connect to Strava. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleStravaDisconnect = async () => {

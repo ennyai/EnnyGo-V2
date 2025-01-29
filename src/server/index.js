@@ -175,22 +175,15 @@ const startServer = async (retries = 5) => {
       console.log(`- Frontend URL: ${frontendUrl}`);
       console.log('- Server is ready to handle requests\n');
 
-      // Test if we can make a request to our own health endpoint
-      try {
-        const http = require('http');
-        const healthCheck = http.get(`http://localhost:${port}/health`, (res) => {
-          let data = '';
-          res.on('data', (chunk) => { data += chunk; });
-          res.on('end', () => {
-            console.log('Health check response:', data);
-          });
-        }).on('error', (err) => {
-          console.error('Health check failed:', err);
+      // Test if we can make a request to our own health endpoint using fetch
+      fetch(`http://localhost:${port}/health`)
+        .then(response => response.json())
+        .then(data => {
+          console.log('Health check response:', data);
+        })
+        .catch(error => {
+          console.error('Health check failed:', error);
         });
-        healthCheck.end();
-      } catch (error) {
-        console.error('Error performing health check:', error);
-      }
     });
 
     server.on('error', (error) => {

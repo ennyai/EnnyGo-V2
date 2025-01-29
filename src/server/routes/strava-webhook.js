@@ -178,7 +178,7 @@ router.post('/activities', async (req, res) => {
 
 // OAuth callback endpoint
 router.get('/callback', async (req, res) => {
-  const { code, error } = req.query;
+  const { code, error, state } = req.query;
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
   if (error) {
@@ -198,21 +198,81 @@ router.get('/callback', async (req, res) => {
     // Get the athlete data
     const athlete = await StravaService.getAthlete(tokenData.access_token);
 
-    // Store tokens and athlete data in Supabase
+    // Store tokens in Supabase
     const supabase = getSupabaseClient();
-    const { error: upsertError } = await supabase
+
+    // Get user_id from state parameter (should be passed during authorization)
+    const user_id = state;
+
+    if (!user_id) {
+      console.error('No user_id provided in state parameter');
+      return res.redirect(`${frontendUrl}/dashboard?error=no_user_id`);
+    }
+
+    // Store the tokens
+    const { error: tokenError } = await supabase
       .from('strava_tokens')
       .upsert({
-        user_id: req.user?.id, // You'll need to handle user authentication
+        user_id: user_id,
         strava_athlete_id: athlete.id.toString(),
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token,
-        expires_at: tokenData.expires_at
+        expires_at: tokenData.expires_at,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       });
 
-    if (upsertError) {
-      console.error('Error storing tokens:', upsertError);
-      return res.redirect(`${frontendUrl}/dashboard?error=database_error`);
+    if (tokenError) {
+      console.error('Error storing tokens:', tokenError);
+      return res.redirect(`${frontendUrl}/dashboard?error=token_store_failed`);
+    }
+
+    // Create default user settings if they don't exist
+    const { error: settingsError } = await supabase
+      .from('user_settings')
+      .upsert({
+        user_id: user_id,
+        watch_activities: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+
+    if (settingsError) {
+      console.error('Error creating user settings:', settingsError);
+      // Don't redirect on settings error, just log it
+    }
+
+    // Fetch initial activities
+    try {
+      const activities = await StravaService.getAthleteActivities(tokenData.access_token);
+      
+      // Store activities in database
+      for (const activity of activities) {
+        const { error: activityError } = await supabase
+          .from('activities')
+          .upsert({
+            user_id: user_id,
+            strava_id: activity.id,
+            name: activity.name,
+            type: activity.type,
+            distance: activity.distance,
+            moving_time: activity.moving_time,
+            start_date: activity.start_date,
+            total_elevation_gain: activity.total_elevation_gain,
+            start_latlng: activity.start_latlng ? activity.start_latlng[0] : null,
+            end_latlng: activity.end_latlng ? activity.end_latlng[0] : null,
+            average_speed: activity.average_speed,
+            max_speed: activity.max_speed,
+            created_at: new Date().toISOString()
+          });
+
+        if (activityError) {
+          console.error('Error storing activity:', activityError);
+        }
+      }
+    } catch (activitiesError) {
+      console.error('Error fetching initial activities:', activitiesError);
+      // Don't redirect on activities error, just log it
     }
 
     // Redirect back to the frontend with success

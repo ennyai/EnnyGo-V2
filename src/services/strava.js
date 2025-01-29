@@ -11,10 +11,14 @@ const STRAVA_CONFIG = {
 };
 
 class StravaService {
-  static getAuthUrl() {
+  static getAuthUrl(userId) {
+    if (!userId) {
+      throw new Error('User ID is required for Strava authorization');
+    }
+    
     // Updated scopes to include read and write permissions
     const scope = 'read,profile:read_all,activity:read,activity:read_all,activity:write';
-    return `${STRAVA_CONFIG.authUrl}?client_id=${STRAVA_CONFIG.clientId}&response_type=code&redirect_uri=${STRAVA_CONFIG.redirectUri}&scope=${scope}&approval_prompt=force`;
+    return `${STRAVA_CONFIG.authUrl}?client_id=${STRAVA_CONFIG.clientId}&response_type=code&redirect_uri=${STRAVA_CONFIG.redirectUri}&scope=${scope}&approval_prompt=force&state=${userId}`;
   }
 
   static async exchangeToken(code) {
@@ -158,4 +162,4 @@ class StravaService {
   }
 }
 
-export default StravaService; 
+export default StravaService;
