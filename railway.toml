@@ -1,26 +1,19 @@
 [build]
-builder = "DOCKERFILE"
-buildCommand = "yarn build"
-dockerfilePath = "Dockerfile"
-buildArgs = [
-  "VITE_SUPABASE_URL",
-  "VITE_SUPABASE_ANON_KEY",
-  "VITE_STRAVA_CLIENT_ID",
-  "VITE_STRAVA_CLIENT_SECRET",
-  "VITE_STRAVA_REDIRECT_URI",
-  "VITE_STRAVA_AUTH_URL",
-  "VITE_STRAVA_TOKEN_URL",
-  "VITE_API_URL",
-  "VITE_STRAVA_WEBHOOK_URL"
+# Build commands
+commands = [
+  "yarn install --frozen-lockfile",
+  "yarn build"
 ]
 
 [deploy]
 startCommand = "yarn start"
 healthcheckPath = "/health"
-healthcheckTimeout = 100
-restartPolicyType = "ON_FAILURE"
-numReplicas = 1
-port = 3001
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[deploy.envs]
+NODE_ENV = "production"
 
 [nixpacks]
 node_version = "18.x" 
