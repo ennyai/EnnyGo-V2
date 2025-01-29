@@ -1,60 +1,59 @@
-import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useToast } from '@/components/ui/use-toast';
-import StravaService from '@/services/strava';
-import {
-  fetchActivitiesStart,
-  fetchActivitiesSuccess,
-  fetchActivitiesError,
-  setPage,
-  resetActivities
-} from '@/store/slices/activitySlice';
+import { useState, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useSelector } from 'react-redux';
 
-export const useActivities = () => {
-  const dispatch = useDispatch();
-  const { toast } = useToast();
-  const {
-    activities,
-    isLoading,
-    error,
-    pagination: { page, per_page, hasMore }
-  } = useSelector((state) => state.activities);
+export function useActivities() {
+  const [activities, setActivities] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const { isConnected } = useSelector((state) => state.strava);
 
-  const fetchActivities = async (isInitialFetch = false) => {
-    if (isInitialFetch) {
-      dispatch(resetActivities());
+  const fetchActivities = useCallback(async (reset = false) => {
+    if (!isConnected) {
+      setActivities([]);
+      setHasMore(false);
+      return;
     }
-    
+
     try {
-      dispatch(fetchActivitiesStart());
-      const data = await StravaService.getActivities({ 
-        page: isInitialFetch ? 1 : page, 
-        per_page 
-      });
-      dispatch(fetchActivitiesSuccess(data));
-    } catch (error) {
-      dispatch(fetchActivitiesError(error.message));
-      toast({
-        title: "Error fetching activities",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  };
+      setIsLoading(true);
+      setError(null);
 
-  const loadMore = () => {
+      const currentPage = reset ? 1 : page;
+      const { data, error: fetchError } = await supabase
+        .from('activities')
+        .select('*')
+        .order('start_date', { ascending: false })
+        .range((currentPage - 1) * 10, currentPage * 10 - 1);
+
+      if (fetchError) throw fetchError;
+
+      if (reset) {
+        setActivities(data);
+      } else {
+        setActivities(prev => [...prev, ...data]);
+      }
+
+      setHasMore(data.length === 10);
+      if (!reset) {
+        setPage(prev => prev + 1);
+      } else {
+        setPage(2);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isConnected, page]);
+
+  const loadMore = useCallback(() => {
     if (!isLoading && hasMore) {
-      dispatch(setPage(page + 1));
+      fetchActivities();
     }
-  };
-
-  // Fetch activities when page changes
-  useEffect(() => {
-    // Only fetch if we're not on page 1 (initial fetch is handled separately)
-    if (page > 1 && !isLoading) {
-      fetchActivities(false);
-    }
-  }, [page, isLoading]);
+  }, [fetchActivities, isLoading, hasMore]);
 
   return {
     activities,
@@ -64,4 +63,4 @@ export const useActivities = () => {
     fetchActivities,
     loadMore
   };
-}; 
+} 

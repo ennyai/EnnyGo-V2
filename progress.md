@@ -440,29 +440,53 @@ yarn test
 - Added proper state reset on disconnect
 
 ### Recent Updates (2024-03-22)
-1. Test Suite Improvements:
-   - ✅ Fixed Login component tests to use local state
-   - ✅ Updated Home component tests to match current implementation
-   - ✅ Removed unused Events and Blog tests for V2 simplification
-   - ✅ Fixed axios mock implementation for Strava service tests
-   - ✅ Improved test organization and structure
-   - ✅ Cleaned up test warnings and errors
-   - ✅ Removed deprecated webhook tests
-   - ✅ All tests now passing with proper assertions
+1. Strava Integration Improvements:
+   - ✅ Refactored OAuth flow to be backend-first for enhanced security
+   - ✅ Improved token management:
+     - Moved token handling entirely to backend
+     - Implemented secure token storage in Supabase
+     - Added proper token refresh mechanism
+   - ✅ Enhanced activity management:
+     - Added local activity storage in Supabase
+     - Implemented efficient activity fetching
+     - Added pagination support
+   - ✅ Improved state management:
+     - Simplified Redux store structure
+     - Removed redundant token storage
+     - Added proper error handling
+   - ✅ Enhanced user settings:
+     - Streamlined settings management
+     - Added proper sync between frontend and backend
+     - Improved UX for enabling/disabling features
 
-2. Code Simplification:
-   - ✅ Removed Events feature for V2
-   - ✅ Removed Blog feature for V2
-   - ✅ Streamlined application to focus on core Strava integration
-   - ✅ Cleaned up unused test files and mocks
-   - ✅ Simplified project structure
+2. Dashboard Enhancements:
+   - ✅ Added comprehensive activity statistics:
+     - Monthly distance tracking
+     - Time spent exercising
+     - Activity count comparisons
+     - Average metrics per activity
+   - ✅ Improved activity visualization:
+     - Weekly progress chart
+     - Recent activities list
+     - Load more functionality
+   - ✅ Enhanced Strava connection UI:
+     - Clear connection status
+     - Easy access to settings
+     - Improved error feedback
 
-3. Test Coverage Status:
-   - ✅ Home component: 4 passing tests
-   - ✅ Login component: 4 passing tests
-   - ✅ Activity slice: 7 passing tests
-   - ✅ Strava service: 6 passing tests
-   - Total: 21 passing tests across 4 test files
+3. Security Improvements:
+   - ✅ Moved sensitive operations to backend:
+     - Token exchange
+     - Token refresh
+     - Activity management
+   - ✅ Enhanced error handling:
+     - Better error messages
+     - Proper error recovery
+     - User-friendly notifications
+   - ✅ Improved data management:
+     - Secure token storage
+     - Protected activity data
+     - Safe settings management
 
 ### Recent Updates (2024-03-23)
 1. Deployment Preparation:

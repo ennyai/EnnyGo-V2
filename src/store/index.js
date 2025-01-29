@@ -19,7 +19,11 @@ export const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: {
         // Ignore these action types
-        ignoredActions: ['auth/setCredentials'],
+        ignoredActions: ['auth/setCredentials', 'strava/connectionSuccess'],
+        // Ignore these field paths in all actions
+        ignoredActionPaths: ['payload.athlete'],
+        // Ignore these paths in the state
+        ignoredPaths: ['strava.athlete'],
       },
     }),
 });

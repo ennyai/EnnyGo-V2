@@ -170,242 +170,46 @@ export default function Dashboard() {
 
   const stats = calculateStats();
 
-  // Check for existing Strava connection on mount
+  // Handle Strava OAuth callback
   useEffect(() => {
-    const checkStravaConnection = async () => {
-      if (!user || isConnected) return;
-
-      try {
-        // Check for tokens in Supabase
-        const { data: tokens, error: tokenError } = await supabase
-          .from('strava_tokens')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (tokenError) {
-          console.error('Error fetching tokens:', tokenError);
-          return;
-        }
-
-        if (!tokens) {
-          console.log('No Strava tokens found for user');
-          // Ensure settings are reset when no Strava connection exists
-          dispatch(setWatchActivities(false));
-          return;
-        }
-
-        // Load user settings
-        const { data: settings, error: settingsError } = await supabase
-          .from('user_settings')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (settingsError) {
-          console.error('Error fetching settings:', settingsError);
-          // If there's an error fetching settings, default to false
-          dispatch(setWatchActivities(false));
-        } else if (settings) {
-          // Update Redux state with the current settings
-          dispatch(setWatchActivities(settings.watch_activities));
-        } else {
-          // If no settings exist, create them with watch_activities set to false
-          const { error: createError } = await supabase
-            .from('user_settings')
-            .insert({
-              user_id: user.id,
-              watch_activities: false
-            });
-
-          if (createError) {
-            console.error('Error creating settings:', createError);
-          }
-          dispatch(setWatchActivities(false));
-        }
-
-        // Check if token is expired or will expire in the next minute
-        const isTokenExpired = tokens.expires_at * 1000 <= Date.now() + 60000;
-        
-        if (isTokenExpired) {
-          console.log('Token is expired, attempting to refresh...');
-          try {
-            const refreshedTokens = await StravaService.refreshToken(tokens.refresh_token);
-            const athleteData = await StravaService.getAthleteData(refreshedTokens.access_token);
-
-            // Update tokens in Supabase
-            await supabase
-              .from('strava_tokens')
-              .update({
-                access_token: refreshedTokens.access_token,
-                refresh_token: refreshedTokens.refresh_token,
-                expires_at: refreshedTokens.expires_at
-              })
-              .eq('user_id', user.id);
-
-            // Save to localStorage
-            clientStorage.setStravaTokens(refreshedTokens);
-            clientStorage.setStravaAthlete(athleteData);
-
-            // Update Redux state
-            dispatch(connectionSuccess({
-              ...refreshedTokens,
-              athlete: athleteData
-            }));
-          } catch (refreshError) {
-            console.error('Error refreshing token:', refreshError);
-            // Clear invalid tokens
-            await supabase
-              .from('strava_tokens')
-              .delete()
-              .eq('user_id', user.id);
-            clientStorage.clearStravaData();
-            dispatch(setWatchActivities(false));
-            return;
-          }
-        } else {
-          try {
-            // Token is still valid, get athlete data
-            const athleteData = await StravaService.getAthleteData(tokens.access_token);
-            
-            // Save to localStorage for frontend use
-            clientStorage.setStravaTokens(tokens);
-            clientStorage.setStravaAthlete(athleteData);
-            
-            // Update Redux state
-            dispatch(connectionSuccess({
-              ...tokens,
-              athlete: athleteData
-            }));
-          } catch (error) {
-            console.error('Error getting athlete data:', error);
-            // Clear invalid tokens
-            await supabase
-              .from('strava_tokens')
-              .delete()
-              .eq('user_id', user.id);
-            clientStorage.clearStravaData();
-            dispatch(setWatchActivities(false));
-          }
-        }
-      } catch (error) {
-        console.error('Error in checkStravaConnection:', error);
-        dispatch(setWatchActivities(false));
-      }
-    };
-
-    checkStravaConnection();
-  }, [user, isConnected, dispatch]);
-
-  useEffect(() => {
-    if (isConnected) {
-      fetchActivities(true);
-    }
-  }, [isConnected]);
-
-  // OAuth callback handling
-  useEffect(() => {
-    if (loading) {
-      console.log('Waiting for user data to load...');
-      return;
-    }
-
-    const queryParams = new URLSearchParams(location.search);
-    const code = queryParams.get('code');
-    const error = queryParams.get('error');
+    const params = new URLSearchParams(location.search);
+    const code = params.get('code');
+    const error = params.get('error');
+    const success = params.get('success');
 
     if (error) {
-      dispatch(connectionFailed('Failed to connect with Strava'));
       toast({
-        variant: "destructive",
-        title: "Authentication Error",
-        description: "Failed to connect with Strava. Please try again."
+        title: 'Connection Failed',
+        description: 'Failed to connect to Strava. Please try again.',
+        variant: 'destructive'
       });
       return;
     }
 
-    if (code && !isConnected && processedCode.current !== code) {
-      processedCode.current = code;
-      handleStravaCallback(code);
-      window.history.replaceState({}, '', '/dashboard');
+    if (success === 'true') {
+      toast({
+        title: 'Connected!',
+        description: 'Successfully connected to Strava.',
+      });
+      dispatch(connectionSuccess());
+      return;
     }
-  }, [location, dispatch, toast, isConnected, loading, user]);
 
-  const handleStravaCallback = async (code) => {
-    try {
-      if (loading || !user) {
-        console.log('Waiting for user data...', { loading, user });
-        return; // The useEffect will run again when user is available
-      }
-
+    if (code && code !== processedCode.current) {
+      processedCode.current = code;
       dispatch(startConnecting());
       
-      // First handle Strava connection
-      console.log('Starting token exchange with code:', code);
-      const tokenData = await StravaService.exchangeToken(code);
-      console.log('Received token data:', tokenData);
-      
-      const athleteData = await StravaService.getAthleteData(tokenData.access_token);
-      console.log('Received athlete data:', athleteData);
-      
-      // Save tokens to Supabase
-      const { error: tokenError } = await supabase
-        .from('strava_tokens')
-        .upsert({
-          user_id: user.id,
-          access_token: tokenData.access_token,
-          refresh_token: tokenData.refresh_token,
-          expires_at: tokenData.expires_at,
-          strava_athlete_id: athleteData.id.toString()
-        });
-
-      if (tokenError) {
-        console.error('Error saving tokens:', tokenError);
-        throw new Error('Failed to save Strava tokens');
-      }
-      
-      // Save to localStorage for frontend use
-      clientStorage.setStravaTokens(tokenData);
-      clientStorage.setStravaAthlete(athleteData);
-      
-      // Always create or update settings with watch_activities set to false
-      console.log('Setting watch_activities to false...');
-      const { error: settingsError } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          watch_activities: false
-        });
-
-      if (settingsError) {
-        console.error('Error updating settings:', settingsError);
-        // Don't throw here, as Strava connection is already successful
-      }
-      
-      // Initialize Redux state
-      dispatch(setWatchActivities(false));
-      
-      console.log('Dispatching connection success...');
-      dispatch(connectionSuccess({ ...tokenData, athlete: athleteData }));
-      
-      toast({
-        title: "Connected to Strava",
-        description: `Welcome, ${athleteData.firstname}! Your Strava account is now connected.`,
-      });
-    } catch (error) {
-      console.error('Connection error:', error);
-      console.error('Error details:', error.response?.data || error.message);
-      dispatch(connectionFailed(error.message));
-      toast({
-        variant: "destructive",
-        title: "Connection Error",
-        description: "Failed to complete Strava connection. Please try again."
-      });
+      // The backend will handle the token exchange and database updates
+      window.location.href = `/api/strava/callback?code=${code}`;
     }
-  };
+  }, [location.search, dispatch, toast]);
 
   const handleStravaConnect = () => {
-    window.location.href = StravaService.getAuthUrl();
+    const clientId = import.meta.env.VITE_STRAVA_CLIENT_ID;
+    const redirectUri = `${window.location.origin}/dashboard`;
+    const scope = 'activity:read_all,activity:write';
+    
+    window.location.href = `https://www.strava.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
   };
 
   const handleStravaDisconnect = async () => {
@@ -522,6 +326,59 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         )}
+        
+        {/* Strava Connection Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Strava Connection</CardTitle>
+            <CardDescription>
+              Connect your Strava account to automatically generate creative titles for your activities.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isConnected ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <img
+                    src={athlete?.profile}
+                    alt={athlete?.firstname}
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <div>
+                    <p className="font-medium">{`${athlete?.firstname} ${athlete?.lastname}`}</p>
+                    <p className="text-sm text-muted-foreground">Connected to Strava</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="watch-activities"
+                      checked={watchActivities}
+                      onCheckedChange={handleWatchActivitiesToggle}
+                    />
+                    <label htmlFor="watch-activities">
+                      Auto-generate titles
+                    </label>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={handleStravaDisconnect}
+                    disabled={isConnecting}
+                  >
+                    Disconnect
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                onClick={handleStravaConnect}
+                disabled={isConnecting}
+              >
+                {isConnecting ? 'Connecting...' : 'Connect with Strava'}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
         
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

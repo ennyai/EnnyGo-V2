@@ -4,7 +4,8 @@ import { clientStorage } from '../../utils/storage';
 // Initialize with false, ignoring any stored value
 const initialState = {
   watchActivities: false,
-  // Add more settings as needed
+  isLoading: false,
+  error: null
 };
 
 const settingsSlice = createSlice({
@@ -17,19 +18,35 @@ const settingsSlice = createSlice({
       clientStorage.setSettings({ ...clientStorage.getSettings(), watchActivities: state.watchActivities });
     },
     setWatchActivities: (state, action) => {
-      // Ensure the value is a boolean
-      state.watchActivities = Boolean(action.payload);
-      // Update client storage
-      clientStorage.setSettings({ ...clientStorage.getSettings(), watchActivities: state.watchActivities });
+      state.watchActivities = action.payload;
     },
     resetSettings: (state) => {
       state.watchActivities = false;
       // Clear settings in client storage
       clientStorage.setSettings({ ...clientStorage.getSettings(), watchActivities: false });
     },
-    // Add more settings reducers as needed
+    startSettingsUpdate: (state) => {
+      state.isLoading = true;
+      state.error = null;
+    },
+    settingsUpdateSuccess: (state) => {
+      state.isLoading = false;
+      state.error = null;
+    },
+    settingsUpdateFailed: (state, action) => {
+      state.isLoading = false;
+      state.error = action.payload;
+    }
   },
 });
 
-export const { toggleWatchActivities, setWatchActivities, resetSettings } = settingsSlice.actions;
+export const {
+  toggleWatchActivities,
+  setWatchActivities,
+  resetSettings,
+  startSettingsUpdate,
+  settingsUpdateSuccess,
+  settingsUpdateFailed
+} = settingsSlice.actions;
+
 export default settingsSlice.reducer; 
